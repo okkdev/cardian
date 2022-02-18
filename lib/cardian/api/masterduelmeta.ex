@@ -25,12 +25,20 @@ defmodule Cardian.Api.Masterduelmeta do
 
   def search_card(name) when is_binary(name) do
     url =
-      (@url <> "/cards?search=" <> name)
+      "#{@url}/cards?search=#{name}&limit=25&cardSort=popRank&aggregate=search"
       |> URI.encode()
 
     Finch.build(:get, url)
     |> Finch.request(MyFinch)
     |> handle_response()
+  end
+
+  def get_card(card) when is_binary(card) do
+    if object_id?(card) do
+      get_card_by_id(card)
+    else
+      search_card(card)
+    end
   end
 
   defp handle_response(resp) do
@@ -41,5 +49,9 @@ defmodule Cardian.Api.Masterduelmeta do
       {:error, reason} ->
         Logger.error(reason)
     end
+  end
+
+  defp object_id?(object_id) do
+    String.match?(object_id, ~r/^[a-fA-F0-9]{24}$/)
   end
 end

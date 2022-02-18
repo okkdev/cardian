@@ -48,16 +48,13 @@ defmodule Cardian.Interactions do
   end
 
   def handle(
-        %Interaction{data: %{name: "card", options: [%{name: "name", value: card_id}]}} =
-          interaction
+        %Interaction{data: %{name: "card", options: [%{name: "name", value: card}]}} = interaction
       ) do
-    case Masterduelmeta.get_card_by_id(card_id) do
-      [card | _] ->
+    case Masterduelmeta.get_card(card) do
+      [c | _] ->
         Api.create_interaction_response(interaction, %{
           type: 4,
-          data:
-            Builder.build_card_message(card)
-            |> IO.inspect()
+          data: Builder.build_card_message(c)
         })
 
       [] ->
