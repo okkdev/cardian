@@ -11,7 +11,7 @@ defmodule Cardian.Interactions do
   def card_command do
     command = %{
       name: "card",
-      description: "Get Yu-Gi-Oh Master Duel card info",
+      description: "Get Yu-Gi-Oh! Master Duel card info",
       options: [
         %{
           type: 3,
@@ -35,7 +35,7 @@ defmodule Cardian.Interactions do
         } = interaction
       ) do
     cards =
-      if String.length(query) > 2 do
+      if String.length(query) > 3 do
         Masterduelmeta.search_card(query)
       else
         []
