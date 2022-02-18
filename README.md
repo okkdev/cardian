@@ -1,21 +1,18 @@
 # Cardian
 
-**TODO: Add description**
+Yu-Gi-Oh! Master Duel Discord Bot
 
-## Installation
+Fetches data from the [Master Duel Meta](https://masterduelmeta.com/) API
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `cardian` to your list of dependencies in `mix.exs`:
+## Todo
 
-```elixir
-def deps do
-  [
-    {:cardian, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/cardian](https://hexdocs.pm/cardian).
-
+- [x] Spells
+- [x] Traps
+- [x] Normal Monster
+- [x] Synchro
+- [x] XYZ
+- [x] Link
+- [x] Effect
+- [x] Ritual
+- [x] Pendulum (still room for improvement)
+- [x] Fusion
