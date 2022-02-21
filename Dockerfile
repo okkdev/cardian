@@ -17,7 +17,7 @@ RUN mix release
 FROM alpine AS runner
 
 RUN apk update && \
-  apk add --no-cache bash
+  apk add --no-cache bash libstdc++ openssl ncurses-libs
 
 RUN mkdir /app
 WORKDIR /app
