@@ -41,7 +41,7 @@ defmodule Cardian.Interactions do
         []
       end
 
-    Api.create_interaction_response(interaction, %{
+    Api.create_interaction_response!(interaction, %{
       type: 8,
       data: Builder.build_autocomplete_choices(cards)
     })
@@ -50,18 +50,17 @@ defmodule Cardian.Interactions do
   def handle(
         %Interaction{data: %{name: "card", options: [%{name: "name", value: card}]}} = interaction
       ) do
+    Api.create_interaction_response!(interaction, %{type: 5})
+
     case Masterduelmeta.get_card(card) do
       [c | _] ->
-        Api.create_interaction_response(interaction, %{
-          type: 4,
-          data: Builder.build_card_message(c)
-        })
+        Api.edit_interaction_response!(interaction, Builder.build_card_message(c))
 
       [] ->
-        Api.create_interaction_response(interaction, %{
-          type: 4,
-          data: Builder.build_user_message("Card not found :pensive:")
-        })
+        Api.edit_interaction_response!(
+          interaction,
+          Builder.build_user_message("Card not found :pensive:")
+        )
     end
   end
 
