@@ -6,13 +6,4 @@ Fetches data from the [Master Duel Meta](https://masterduelmeta.com/) API
 
 ## Todo
 
-- [x] Spells
-- [x] Traps
-- [x] Normal Monster
-- [x] Synchro
-- [x] XYZ
-- [x] Link
-- [x] Effect
-- [x] Ritual
-- [x] Pendulum (still room for improvement)
-- [x] Fusion
+- [ ] Defer requests for API calls that take longer than 3 sec
