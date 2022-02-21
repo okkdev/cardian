@@ -50,7 +50,7 @@ defmodule Cardian.Interactions do
   def handle(
         %Interaction{data: %{name: "card", options: [%{name: "name", value: card}]}} = interaction
       ) do
-    Api.create_interaction_response!(interaction, %{type: 5})
+    Api.create_interaction_response(interaction, %{type: 5})
 
     case Masterduelmeta.get_card(card) do
       [c | _] ->
