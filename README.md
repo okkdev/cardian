@@ -16,6 +16,14 @@ Run the container, from [Docker Hub](https://hub.docker.com/repository/docker/ok
 docker run -e CARDIAN_TOKEN=<your-bot-token> okkdev/cardian
 ```
 
+To deploy the application commands run this command once:
+
+```sh
+docker exec <cardian-container-id> /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()"
+```
+
+#### 🚨 It can take up to 1h to register application commands 
+
 ## Development
 
 Install dependencies:
