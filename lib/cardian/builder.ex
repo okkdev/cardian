@@ -58,7 +58,7 @@ defmodule Cardian.Builder do
     level =
       case card.monster_type do
         :xyz -> "Rank"
-        :link -> "Rating"
+        :link -> "Link"
         _ -> "Level"
       end
 
