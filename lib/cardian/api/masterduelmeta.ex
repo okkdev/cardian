@@ -181,16 +181,17 @@ defmodule Cardian.Api.Masterduelmeta do
     end
   end
 
-  defp get_monster_type([type | _]) do
+  defp get_monster_type([type | types]) do
     case type do
       "Synchro" -> :synchro
       "Effect" -> :effect
       "Normal" -> :normal
       "Xyz" -> :xyz
       "Fusion" -> :fusion
-      "Pendulum" -> :pendulum
-      "Link" -> :link
       "Ritual" -> :ritual
+      "Link" -> :link
+      # Get the second type of pendulum monsters as this is used for color and level name
+      "Pendulum" -> get_monster_type(types)
       _ -> nil
     end
   end
