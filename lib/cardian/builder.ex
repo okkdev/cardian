@@ -62,18 +62,30 @@ defmodule Cardian.Builder do
         _ -> "Level"
       end
 
-    put_description(embed, """
-      **Attribute**: #{card.attribute} **Rarity**: #{card.rarity}
-      **#{level}**: #{card.level} **Type**: #{Enum.join([card.race | card.monster_types], "/")}
-      **Status**: #{card.status}
-    """)
+    put_description(
+      embed,
+      Enum.join(
+        [
+          "**Attribute**: #{card.attribute} **Rarity**: #{card.rarity}",
+          "**#{level}**: #{card.level} **Type**: #{Enum.join([card.race | card.monster_types], "/")}",
+          "**Status**: #{card.status}"
+        ],
+        "\n"
+      )
+    )
   end
 
   defp put_card_metadata(embed, card) do
-    put_description(embed, """
-      **Type**: #{card.race} **Rarity**: #{card.rarity}
-      **Status**: #{card.status}
-    """)
+    put_description(
+      embed,
+      Enum.join(
+        [
+          "**Type**: #{card.race} **Rarity**: #{card.rarity}",
+          "**Status**: #{card.status}"
+        ],
+        "\n"
+      )
+    )
   end
 
   defp put_card_description(embed, %Card{type: :monster} = card) do
