@@ -4,12 +4,18 @@ defmodule Cardian.Interactions do
   alias Cardian.Api.Masterduelmeta
   alias Cardian.Builder
 
-  def initialize_interactions() do
-    card_command()
+  def deploy_commands() do
+    Api.bulk_overwrite_global_application_commands(get_commands())
+  end
+
+  def get_commands() do
+    [
+      card_command()
+    ]
   end
 
   def card_command do
-    command = %{
+    %{
       name: "card",
       description: "Get Yu-Gi-Oh! Master Duel card info",
       options: [
@@ -22,11 +28,6 @@ defmodule Cardian.Interactions do
         }
       ]
     }
-
-    Api.create_guild_application_command(
-      %Nostrum.Struct.Guild{id: 582_319_286_295_724_035}.id,
-      command
-    )
   end
 
   def handle(
