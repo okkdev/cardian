@@ -9,7 +9,7 @@ defmodule Cardian.EventConsumer do
   end
 
   def handle_event({:READY, _data, _ws_state}) do
-    Api.update_status(:online, "to \"/card\" commands", 2)
+    Api.update_status(:online, "/card commands", 2)
   end
 
   def handle_event({:INTERACTION_CREATE, interaction, _ws_state}) do
