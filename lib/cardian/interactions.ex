@@ -5,7 +5,8 @@ defmodule Cardian.Interactions do
   alias Cardian.Builder
 
   def deploy_commands() do
-    Api.bulk_overwrite_global_application_commands(get_commands())
+    {:ok, _} = Api.bulk_overwrite_global_application_commands(get_commands())
+    IO.puts("Commands deployed! (It might take up to an hour to register...)")
   end
 
   def get_commands() do
