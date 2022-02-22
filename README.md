@@ -13,13 +13,13 @@ Create a Discord application and get the bot token. ([More info here](https://di
 Run the container, from [Docker Hub](https://hub.docker.com/repository/docker/okkdev/cardian), with this command:
 
 ```sh
-docker run -e CARDIAN_TOKEN=<your-bot-token> okkdev/cardian
+docker run -e CARDIAN_TOKEN=<your-bot-token> okkdev/cardian --name cardian
 ```
 
 To deploy the application commands run this command once:
 
 ```sh
-docker exec <cardian-container-id> /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()"
+docker exec cardian /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()"
 ```
 
 #### 🚨 It can take up to 1h to register application commands 
