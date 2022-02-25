@@ -18,8 +18,6 @@ defmodule Cardian.Model.Card do
     :rarity,
     :image_url,
     :url,
-    sets: [
-      Cardian.Model.Set
-    ]
+    :sets
   ]
 end
