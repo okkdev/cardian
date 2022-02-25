@@ -36,7 +36,7 @@ defmodule Cardian.Builder do
   def build_autocomplete_choices(cards) do
     choices =
       cards
-      |> Enum.take(10)
+      |> Enum.take(25)
       |> Enum.map(&%{name: &1.name, value: &1.id})
 
     %{
