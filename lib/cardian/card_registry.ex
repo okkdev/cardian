@@ -102,7 +102,7 @@ defmodule Cardian.CardRegistry do
     Process.send_after(
       :card_registry,
       :update_registry,
-      :timer.hours(Application.fetch_env!(:cardian, :update_interval))
+      :timer.minutes(Application.fetch_env!(:cardian, :update_interval))
     )
   end
 end
