@@ -55,7 +55,7 @@ defmodule Cardian.Interactions do
       [] ->
         Api.edit_interaction_response!(
           interaction,
-          Builder.build_user_message("Card not found :pensive:")
+          Builder.build_user_message("Card not found... :pensive:")
         )
     end
   end
