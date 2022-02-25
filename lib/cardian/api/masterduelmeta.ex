@@ -157,6 +157,8 @@ defmodule Cardian.Api.Masterduelmeta do
     arrows
     |> Enum.map(&mapping[&1])
     |> Enum.join()
+    # Add invisible character to force mobile to show small emojis
+    |> then(&(&1 <> "‎"))
   end
 
   defp parse_link_arrows(_) do
