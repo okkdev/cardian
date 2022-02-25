@@ -2,6 +2,7 @@ defmodule Cardian.Builder do
   import Nostrum.Struct.Embed
   alias Nostrum.Struct.Embed
   alias Cardian.Model.Card
+  alias Cardian.CardRegistry
 
   def build_card_message(%Card{} = card) do
     embed =
@@ -35,7 +36,7 @@ defmodule Cardian.Builder do
   def build_autocomplete_choices(cards) do
     choices =
       cards
-      |> Enum.take(25)
+      |> Enum.take(10)
       |> Enum.map(&%{name: &1.name, value: &1.id})
 
     %{
@@ -113,8 +114,9 @@ defmodule Cardian.Builder do
   end
 
   defp build_sets(sets) when is_list(sets) and length(sets) > 0 do
-    Enum.map_join(
-      sets,
+    sets
+    |> Enum.flat_map(&CardRegistry.get_set_by_id(&1))
+    |> Enum.map_join(
       "\n",
       &if &1.url do
         "[#{&1.name}](#{&1.url})"

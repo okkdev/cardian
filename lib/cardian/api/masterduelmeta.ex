@@ -1,60 +1,68 @@
 defmodule Cardian.Api.Masterduelmeta do
-  require Logger
   alias Cardian.Model.{Card, Set}
 
   @url "https://www.masterduelmeta.com/api/v1"
 
-  def get_card_by_name(name) when is_binary(name) do
+  def get_all_cards() do
+    pages = ceil(get_card_amount() / 3000)
+
+    Enum.flat_map(Enum.to_list(1..pages), fn page ->
+      url =
+        "#{@url}/cards?limit=3000&page=#{page}"
+        |> URI.encode()
+
+      Finch.build(:get, url)
+      |> Finch.request(MyFinch)
+      |> handle_response()
+    end)
+    |> Enum.map(&cast_card/1)
+  end
+
+  def get_card_amount() do
     url =
-      (@url <> "/cards?name=" <> name)
+      (@url <> "/cards?collectionCount=true")
       |> URI.encode()
 
     Finch.build(:get, url)
     |> Finch.request(MyFinch)
-    |> handle_response()
-    |> Enum.map(&cast_card/1)
-  end
+    |> case do
+      {:ok, res} ->
+        String.to_integer(res.body)
 
-  def get_card_by_id(id) when is_binary(id) do
-    url =
-      (@url <> "/cards?_id=" <> id)
-      |> URI.encode()
-
-    Finch.build(:get, url)
-    |> Finch.request(MyFinch)
-    |> handle_response()
-    |> Enum.map(&cast_card/1)
-  end
-
-  def search_card(name) when is_binary(name) do
-    url =
-      "#{@url}/cards?search=#{name}&limit=25&cardSort=popRank&aggregate=search"
-      |> URI.encode()
-
-    Finch.build(:get, url)
-    |> Finch.request(MyFinch)
-    |> handle_response()
-    |> Enum.map(&cast_card/1)
-  end
-
-  def get_card(card) when is_binary(card) do
-    if object_id?(card) do
-      get_card_by_id(card)
-    else
-      search_card(card)
+      {:error, reason} ->
+        raise(reason)
     end
   end
 
-  def get_sets_by_id(sets) when is_list(sets) do
+  def get_all_sets() do
+    pages = ceil(get_sets_amount() / 3000)
+
+    Enum.flat_map(Enum.to_list(1..pages), fn page ->
+      url =
+        "#{@url}/sets?limit=3000&page=#{page}"
+        |> URI.encode()
+
+      Finch.build(:get, url)
+      |> Finch.request(MyFinch)
+      |> handle_response()
+    end)
+    |> Enum.map(&cast_set/1)
+  end
+
+  def get_sets_amount() do
     url =
-      sets
-      |> Enum.join(",")
-      |> then(&"#{@url}/sets?_id[$in]=#{&1}")
+      (@url <> "/sets?collectionCount=true")
       |> URI.encode()
 
     Finch.build(:get, url)
     |> Finch.request(MyFinch)
-    |> handle_response()
+    |> case do
+      {:ok, res} ->
+        String.to_integer(res.body)
+
+      {:error, reason} ->
+        raise(reason)
+    end
   end
 
   defp get_image(card_id) when is_binary(card_id) do
@@ -76,22 +84,13 @@ defmodule Cardian.Api.Masterduelmeta do
     nil
   end
 
-  # Legacy set link generation
-  # def get_set_link(set_name) when is_binary(set_name) do
-  #   set_name
-  #   |> String.downcase()
-  #   |> String.replace(" ", "-")
-  #   |> then(&("https://www.masterduelmeta.com/articles/sets/" <> &1))
-  #   |> URI.encode()
-  # end
-
   defp handle_response(resp) do
     case resp do
       {:ok, res} ->
         Jason.decode!(res.body)
 
       {:error, reason} ->
-        Logger.error(reason)
+        raise(reason)
     end
   end
 
@@ -117,28 +116,20 @@ defmodule Cardian.Api.Masterduelmeta do
       rarity: resp["rarity"],
       image_url: get_image(resp["_id"]),
       url: get_card_link(resp["name"]),
-      sets: get_sets(resp["obtain"])
+      sets: Enum.map(resp["obtain"], & &1["source"]["_id"])
     }
   end
 
-  defp get_sets(sets) when length(sets) > 0 do
-    sets
-    |> Enum.map(& &1["source"]["_id"])
-    |> get_sets_by_id()
-    |> Enum.map(
-      &%Set{
-        name: &1["name"],
-        url: get_set_link(&1["linkedArticle"]["url"])
-      }
-    )
-  end
-
-  defp get_sets(_) do
-    []
+  defp cast_set(resp) do
+    %Set{
+      id: resp["_id"],
+      name: resp["name"],
+      url: get_set_link(resp["linkedArticle"]["url"])
+    }
   end
 
   defp parse_effects("[ Pendulum Effect ]" <> description) do
-    [pendulum_effect, rest] = String.split(description, "---", parts: 2)
+    [pendulum_effect, rest] = String.split(description, ["---", "[ "], parts: 2)
     [_, description] = String.split(rest, "]", parts: 2)
 
     {
@@ -198,9 +189,5 @@ defmodule Cardian.Api.Masterduelmeta do
 
   defp get_monster_type(_) do
     nil
-  end
-
-  defp object_id?(object_id) do
-    String.match?(object_id, ~r/^[a-fA-F0-9]{24}$/)
   end
 end

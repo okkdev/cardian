@@ -1,8 +1,7 @@
 defmodule Cardian.Interactions do
   alias Nostrum.Api
   alias Nostrum.Struct.Interaction
-  alias Cardian.Api.Masterduelmeta
-  alias Cardian.Builder
+  alias Cardian.{Builder, CardRegistry}
 
   def deploy_commands() do
     {:ok, _} = Api.bulk_overwrite_global_application_commands(get_commands())
@@ -36,12 +35,7 @@ defmodule Cardian.Interactions do
           data: %{name: "card", options: [%{name: "name", value: query, focused: true}]}
         } = interaction
       ) do
-    cards =
-      if String.length(query) > 3 do
-        Masterduelmeta.search_card(query)
-      else
-        []
-      end
+    cards = CardRegistry.search_card(query)
 
     Api.create_interaction_response!(interaction, %{
       type: 8,
@@ -54,7 +48,7 @@ defmodule Cardian.Interactions do
       ) do
     Api.create_interaction_response(interaction, %{type: 5})
 
-    case Masterduelmeta.get_card(card) do
+    case CardRegistry.get_card(card) do
       [c | _] ->
         Api.edit_interaction_response!(interaction, Builder.build_card_message(c))
 

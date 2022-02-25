@@ -9,7 +9,8 @@ defmodule Cardian.Application do
   def start(_type, _args) do
     children = [
       {Finch, name: MyFinch},
-      Cardian.EventConsumer
+      Cardian.EventConsumer,
+      Cardian.CardRegistry
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
