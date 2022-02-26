@@ -32,7 +32,12 @@ To deploy the application commands run this command once:
 docker exec cardian /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()"
 ```
 
-#### 🚨 It can take up to 1h to register application commands 
+#### 🚨 It can take up to 1h to register application commands
+
+### Environment variables
+
+- `CARDIAN_TOKEN`: Discord bot token
+- `CARDIAN_UPDATE_INTERVAL`: Card cache update interval in minutes. Default: 120
 
 ## Development
 
