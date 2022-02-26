@@ -82,6 +82,7 @@ defmodule Cardian.CardRegistry do
     {:noreply, {cards, sets}}
   rescue
     _ ->
+      Logger.error("Update failed. Rescheduling...")
       schedule_update()
       {:noreply, {cards, sets}}
   end
