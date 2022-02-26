@@ -22,7 +22,7 @@ defmodule Cardian.Interactions do
         %{
           type: 3,
           name: "name",
-          description: "Search a card by name (autocomplete after 3 characters)",
+          description: "Search a card by name",
           autocomplete: true,
           required: true
         }
