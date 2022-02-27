@@ -39,6 +39,12 @@ docker exec cardian /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()
 - `CARDIAN_TOKEN`: Discord bot token
 - `CARDIAN_UPDATE_INTERVAL`: Card cache update interval in minutes. Default: 120
 
+## Changelog
+
+### 2.0
+Refactored how cards are fetched. In v1.0 every autocomplete query and card request were sent to the Master Duel Meta API. This was slow and, especially the autocomplete requests, very wasteful.\
+With v2.0 the bot fetches all cards every 2 hours (by default, can be set via env var) and caches them in an ETS. Now all data is fetched from the cache. This is way faster, fixing the time-out of autocompletion responses.
+
 ## Development
 
 Install dependencies:
