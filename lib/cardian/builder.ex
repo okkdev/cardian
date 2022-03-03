@@ -65,7 +65,7 @@ defmodule Cardian.Builder do
       embed,
       Enum.join(
         [
-          "**Attribute**: #{card.attribute} **Rarity**: #{card.rarity}",
+          "**Attribute**: #{card.attribute} #{put_card_rarity(card.rarity)}",
           "**#{level}**: #{card.level} **Type**: #{Enum.join([card.race | card.monster_types], "/")}",
           "**Status**: #{card.status}"
         ],
@@ -79,13 +79,19 @@ defmodule Cardian.Builder do
       embed,
       Enum.join(
         [
-          "**Type**: #{card.race} **Rarity**: #{card.rarity}",
+          "**Type**: #{card.race} #{put_card_rarity(card.rarity)}",
           "**Status**: #{card.status}"
         ],
         "\n"
       )
     )
   end
+
+  defp put_card_rarity(rarity) when is_binary(rarity) do
+    "**Rarity**: " <> rarity
+  end
+
+  defp put_card_rarity(_), do: ""
 
   defp put_card_description(embed, %Card{type: :monster} = card) do
     if Enum.member?(card.monster_types, "Normal") do
