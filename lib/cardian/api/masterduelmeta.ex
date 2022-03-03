@@ -4,7 +4,7 @@ defmodule Cardian.Api.Masterduelmeta do
   @url "https://www.masterduelmeta.com/api/v1"
 
   @rarity_mapping %{
-    "N" => "<:normal:948990033321414678>",
+    "N" => "<:normalrare:948990033321414678>",
     "R" => "<:rare:948990141786095667>",
     "SR" => "<:superrare:948990076111712356>",
     "UR" => "<:ultrarare:948990098920333332>"
@@ -38,6 +38,7 @@ defmodule Cardian.Api.Masterduelmeta do
   }
 
   @card_type_mapping %{
+    "Normal" => "<:normal:949015950378811412>",
     "Quick-Play" => "<:quickplay:948992874366771240>",
     "Ritual" => "<:ritual:948992874580680786>",
     "Field" => "<:field:948992874169630750>",
