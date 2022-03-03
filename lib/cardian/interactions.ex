@@ -60,7 +60,5 @@ defmodule Cardian.Interactions do
     end
   end
 
-  def handle(_interaction) do
-    :noop
-  end
+  def handle(_interaction), do: :noop
 end

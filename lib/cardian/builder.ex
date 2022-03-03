@@ -51,9 +51,7 @@ defmodule Cardian.Builder do
     put_field(embed, title, content, inline)
   end
 
-  defp try_put_field(embed, _title, _content, _inline) do
-    embed
-  end
+  defp try_put_field(embed, _title, _content, _inline), do: embed
 
   defp put_card_metadata(embed, %Card{type: :monster} = card) do
     level =
@@ -109,9 +107,7 @@ defmodule Cardian.Builder do
     put_field(embed, "ATK / DEF", "#{card.atk} / #{card.def}", true)
   end
 
-  defp put_monster_atk(embed, _card) do
-    embed
-  end
+  defp put_monster_atk(embed, _card), do: embed
 
   defp build_sets(sets) when is_list(sets) and length(sets) > 0 do
     sets
@@ -126,25 +122,17 @@ defmodule Cardian.Builder do
     )
   end
 
-  defp build_sets(_) do
-    "No packs"
-  end
+  defp build_sets(_), do: "No packs"
 
   defp try_put_color(embed, color) when is_integer(color) do
     put_color(embed, color)
   end
 
-  defp try_put_color(embed, _color) do
-    embed
-  end
+  defp try_put_color(embed, _color), do: embed
 
-  defp get_card_color(%Card{type: :spell}) do
-    1_941_108
-  end
+  defp get_card_color(%Card{type: :spell}), do: 1_941_108
 
-  defp get_card_color(%Card{type: :trap}) do
-    12_343_940
-  end
+  defp get_card_color(%Card{type: :trap}), do: 12_343_940
 
   defp get_card_color(%Card{type: :monster} = card) do
     case card.monster_type do

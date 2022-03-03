@@ -16,7 +16,5 @@ defmodule Cardian.EventConsumer do
     Interactions.handle(interaction)
   end
 
-  def handle_event(_event) do
-    :noop
-  end
+  def handle_event(_event), do: :noop
 end
