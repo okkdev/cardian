@@ -55,6 +55,17 @@ defmodule Cardian.CardRegistry do
     Logger.info("Starting Card Registry")
     cards = :ets.new(:cards, [:set, :protected, :named_table, read_concurrency: true])
     sets = :ets.new(:sets, [:set, :protected, :named_table, read_concurrency: true])
+
+    # Duel Result set
+    :ets.insert(
+      sets,
+      {"61fc6622c491eb1813d4c85c",
+       %Cardian.Model.Set{
+         id: "61fc6622c491eb1813d4c85c",
+         name: "Duel Result"
+       }}
+    )
+
     Process.send(self(), :update_registry, [])
     {:ok, {cards, sets}}
   end
