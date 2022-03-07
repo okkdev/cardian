@@ -1,4 +1,5 @@
 defmodule Cardian.Interactions do
+  require Logger
   alias Nostrum.Api
   alias Nostrum.Struct.Interaction
   alias Cardian.{Builder, CardRegistry}
@@ -46,11 +47,22 @@ defmodule Cardian.Interactions do
   def handle(
         %Interaction{data: %{name: "card", options: [%{name: "name", value: card}]}} = interaction
       ) do
-    Api.create_interaction_response(interaction, %{type: 5})
+    Api.create_interaction_response!(interaction, %{type: 5})
 
     case CardRegistry.get_card(card) do
       [c | _] ->
-        Api.edit_interaction_response!(interaction, Builder.build_card_message(c))
+        msg = Builder.build_card_message(c)
+
+        case Api.edit_interaction_response(interaction, msg) do
+          {:ok, _} ->
+            :ok
+
+          err ->
+            Logger.error("Card name/id: #{card}")
+            Logger.error("Found Card: #{c}")
+            Logger.error("Built Message: #{msg}")
+            raise(err)
+        end
 
       [] ->
         Api.edit_interaction_response!(
@@ -58,6 +70,14 @@ defmodule Cardian.Interactions do
           Builder.build_user_message("Card not found... :pensive:")
         )
     end
+  rescue
+    err ->
+      Logger.error(err)
+
+      Api.edit_interaction_response!(
+        interaction,
+        Builder.build_user_message("Something went wrong... :pensive:")
+      )
   end
 
   def handle(_interaction), do: :noop
