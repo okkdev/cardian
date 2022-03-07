@@ -5,3 +5,8 @@ config :nostrum,
 
 config :cardian,
   update_interval: String.to_integer(System.get_env("CARDIAN_UPDATE_INTERVAL", "120"))
+
+if config_env() == :prod do
+  config :logger,
+    level: :info
+end
