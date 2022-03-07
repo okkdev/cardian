@@ -52,14 +52,21 @@ defmodule Cardian.CardRegistry do
     cards = :ets.new(:cards, [:set, :protected, :named_table, read_concurrency: true])
     sets = :ets.new(:sets, [:set, :protected, :named_table, read_concurrency: true])
 
-    # Duel Result set
+    # Insert other sources
     :ets.insert(
       sets,
-      {"61fc6622c491eb1813d4c85c",
-       %Cardian.Model.Set{
-         id: "61fc6622c491eb1813d4c85c",
-         name: "Duel Result"
-       }}
+      [
+        {"61fc6622c491eb1813d4c85c",
+         %Cardian.Model.Set{
+           id: "61fc6622c491eb1813d4c85c",
+           name: "Duel Result"
+         }},
+        {"61ef0297c65dc7a88d9faa7d",
+         %Cardian.Model.Set{
+           id: "61ef0297c65dc7a88d9faa7d",
+           name: "Solo Mode Reward"
+         }}
+      ]
     )
 
     Process.send(self(), :update_registry, [])
