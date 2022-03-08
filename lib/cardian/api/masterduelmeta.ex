@@ -50,7 +50,8 @@ defmodule Cardian.Api.Masterduelmeta do
   def get_all_cards() do
     pages = ceil(get_card_amount() / 3000)
 
-    Enum.flat_map(Enum.to_list(1..pages), fn page ->
+    1..pages
+    |> Stream.flat_map(fn page ->
       url =
         "#{@url}/cards?limit=3000&page=#{page}"
         |> URI.encode()
@@ -59,7 +60,9 @@ defmodule Cardian.Api.Masterduelmeta do
       |> Finch.request(MyFinch)
       |> handle_response()
     end)
-    |> Enum.map(&cast_card/1)
+    |> Stream.filter(&(&1["alternateArt"] != true))
+    |> Stream.map(&cast_card/1)
+    |> Enum.to_list()
   end
 
   def get_card_amount() do
@@ -81,7 +84,8 @@ defmodule Cardian.Api.Masterduelmeta do
   def get_all_sets() do
     pages = ceil(get_sets_amount() / 3000)
 
-    Enum.flat_map(Enum.to_list(1..pages), fn page ->
+    1..pages
+    |> Stream.flat_map(fn page ->
       url =
         "#{@url}/sets?limit=3000&page=#{page}"
         |> URI.encode()
@@ -90,7 +94,8 @@ defmodule Cardian.Api.Masterduelmeta do
       |> Finch.request(MyFinch)
       |> handle_response()
     end)
-    |> Enum.map(&cast_set/1)
+    |> Stream.map(&cast_set/1)
+    |> Enum.to_list()
   end
 
   def get_sets_amount() do
