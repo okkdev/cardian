@@ -189,8 +189,7 @@ defmodule Cardian.Api.Masterduelmeta do
 
   defp parse_link_arrows(arrows) when is_list(arrows) and length(arrows) > 0 do
     arrows
-    |> Enum.map(&@arrow_mapping[&1])
-    |> Enum.join()
+    |> Enum.map_join(&@arrow_mapping[&1])
     # Add invisible character to force mobile to show small emojis
     |> then(&(&1 <> "‎"))
   end

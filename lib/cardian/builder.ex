@@ -36,8 +36,9 @@ defmodule Cardian.Builder do
   def build_autocomplete_choices(cards) do
     choices =
       cards
-      |> Enum.take(25)
-      |> Enum.map(&%{name: &1.name, value: &1.id})
+      |> Stream.take(25)
+      |> Stream.map(&%{name: &1.name, value: &1.id})
+      |> Enum.to_list()
 
     %{
       choices: choices
@@ -117,15 +118,15 @@ defmodule Cardian.Builder do
 
   defp build_sets(sets) when is_list(sets) and length(sets) > 0 do
     sets
-    |> Enum.flat_map(&CardRegistry.get_set_by_id(&1))
-    |> Enum.map_join(
-      "\n",
+    |> Stream.flat_map(&CardRegistry.get_set_by_id(&1))
+    |> Stream.map(
       &if &1.url do
         "[#{&1.name}](#{&1.url})"
       else
         &1.name
       end
     )
+    |> Enum.join("\n")
   end
 
   defp build_sets(_), do: "Unobtainable"
