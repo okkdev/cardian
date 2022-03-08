@@ -58,16 +58,24 @@ defmodule Cardian.Interactions do
             :ok
 
           err ->
-            Logger.error("Card name/id: #{card}")
-            Logger.error("Found Card: #{c}")
-            Logger.error("Built Message: #{msg}")
+            Logger.error("""
+            Card name/id:
+            #{card}
+
+            Found Card:
+            #{inspect(c)}
+
+            Built Message:
+            #{inspect(msg)}
+            """)
+
             raise(err)
         end
 
       [] ->
         Api.edit_interaction_response!(
           interaction,
-          Builder.build_user_message("Card not found... :pensive:")
+          Builder.build_user_message("\"#{card}\" not found... :pensive:")
         )
     end
   rescue

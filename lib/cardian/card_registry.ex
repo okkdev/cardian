@@ -52,23 +52,6 @@ defmodule Cardian.CardRegistry do
     cards = :ets.new(:cards, [:set, :protected, :named_table, read_concurrency: true])
     sets = :ets.new(:sets, [:set, :protected, :named_table, read_concurrency: true])
 
-    # Insert other sources
-    :ets.insert(
-      sets,
-      [
-        {"61fc6622c491eb1813d4c85c",
-         %Cardian.Model.Set{
-           id: "61fc6622c491eb1813d4c85c",
-           name: "Duel Result"
-         }},
-        {"61ef0297c65dc7a88d9faa7d",
-         %Cardian.Model.Set{
-           id: "61ef0297c65dc7a88d9faa7d",
-           name: "Solo Mode Reward"
-         }}
-      ]
-    )
-
     Process.send(self(), :update_registry, [])
     {:ok, {cards, sets}}
   end
@@ -95,7 +78,8 @@ defmodule Cardian.CardRegistry do
     schedule_update()
     {:noreply, {cards, sets}}
   rescue
-    _ ->
+    err ->
+      Logger.error(err)
       Logger.error("Update failed. Rescheduling...")
       schedule_update()
       {:noreply, {cards, sets}}
@@ -103,7 +87,25 @@ defmodule Cardian.CardRegistry do
 
   defp update_sets(sets) do
     new_sets = Masterduelmeta.get_all_sets()
-    true = :ets.insert(sets, Enum.map(new_sets, &{&1.id, &1}))
+
+    true =
+      :ets.insert(
+        sets,
+        [
+          {"61fc6622c491eb1813d4c85c",
+           %Cardian.Model.Set{
+             id: "61fc6622c491eb1813d4c85c",
+             name: "Duel Result"
+           }},
+          {"61ef0297c65dc7a88d9faa7d",
+           %Cardian.Model.Set{
+             id: "61ef0297c65dc7a88d9faa7d",
+             name: "Solo Mode Reward"
+           }}
+        ] ++
+          Enum.map(new_sets, &{&1.id, &1})
+      )
+
     Logger.info("Sets updated")
   end
 
