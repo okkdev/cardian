@@ -34,8 +34,9 @@ defmodule Cardian.CardRegistry do
     q = normalize_string(query)
 
     get_cards()
-    |> Enum.filter(&String.contains?(normalize_string(elem(&1, 1).name), q))
-    |> Enum.map(&elem(&1, 1))
+    |> Stream.filter(&String.contains?(normalize_string(elem(&1, 1).name), q))
+    |> Stream.map(&elem(&1, 1))
+    |> Enum.to_list()
   end
 
   defp normalize_string(string) when is_binary(string) do
