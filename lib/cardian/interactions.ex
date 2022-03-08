@@ -75,7 +75,7 @@ defmodule Cardian.Interactions do
       [] ->
         Api.edit_interaction_response!(
           interaction,
-          Builder.build_user_message("\"#{card}\" not found... :pensive:")
+          Builder.build_user_message("`#{card}` not found... :pensive:")
         )
     end
   rescue

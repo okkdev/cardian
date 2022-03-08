@@ -128,7 +128,7 @@ defmodule Cardian.Builder do
     )
   end
 
-  defp build_sets(_), do: "No packs"
+  defp build_sets(_), do: "Not obtainable"
 
   defp try_put_color(embed, color) when is_integer(color) do
     put_color(embed, color)
