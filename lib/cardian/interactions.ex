@@ -80,7 +80,7 @@ defmodule Cardian.Interactions do
     end
   rescue
     err ->
-      Logger.error(err)
+      Logger.error(Exception.format(:error, err, __STACKTRACE__))
 
       Api.edit_interaction_response!(
         interaction,
