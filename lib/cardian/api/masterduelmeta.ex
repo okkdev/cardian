@@ -115,7 +115,7 @@ defmodule Cardian.Api.Masterduelmeta do
   end
 
   defp get_image(card_id) when is_binary(card_id) do
-    "https://s3.duellinksmeta.com/cards/#{card_id}_w420.webp"
+    "https://imgserv.duellinksmeta.com/v2/mdm/card/#{card_id}?portrait=true"
     |> URI.encode()
   end
 
