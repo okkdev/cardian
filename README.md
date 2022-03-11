@@ -10,6 +10,8 @@ Fetches data from the [Master Duel Meta](https://masterduelmeta.com/) API
 
 ### Autocompletion
 
+Card suggestions with fuzzy searching
+
 ![autocompletion](screenshots/autocomplete.png)
 
 ### Card info
