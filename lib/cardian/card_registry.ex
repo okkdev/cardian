@@ -10,12 +10,14 @@ defmodule Cardian.CardRegistry do
   end
 
   def get_card_by_id(id) do
-    GenServer.call(:card_registry, {:get_card_by_id, id})
+    :cards
+    |> :ets.lookup(id)
     |> Enum.map(&elem(&1, 1))
   end
 
   def get_set_by_id(id) do
-    GenServer.call(:card_registry, {:get_set_by_id, id})
+    :sets
+    |> :ets.lookup(id)
     |> Enum.map(&elem(&1, 1))
   end
 
@@ -27,16 +29,27 @@ defmodule Cardian.CardRegistry do
   end
 
   def get_cards() do
-    GenServer.call(:card_registry, :get_cards)
+    :cards
+    |> :ets.tab2list()
+    |> Enum.map(&elem(&1, 1))
   end
 
   def search_card(query) when is_binary(query) do
-    q = normalize_string(query)
+    query
+    |> normalize_string()
+    |> then(&[&1 | tokenize_string(&1)])
+    |> Stream.flat_map(&:ets.lookup(:index, &1))
+    |> Stream.flat_map(&elem(&1, 1))
+    |> Enum.frequencies()
+    |> Enum.sort_by(&elem(&1, 1), :desc)
+    |> Enum.flat_map(&get_card_by_id(elem(&1, 0)))
+  end
 
-    get_cards()
-    |> Stream.filter(&String.contains?(normalize_string(elem(&1, 1).name), q))
-    |> Stream.map(&elem(&1, 1))
-    |> Enum.to_list()
+  defp tokenize_string(string) when is_binary(string) do
+    string
+    |> String.graphemes()
+    |> Stream.chunk_every(3, 1, :discard)
+    |> Enum.map(&Enum.join(&1))
   end
 
   defp normalize_string(string) when is_binary(string) do
@@ -50,48 +63,36 @@ defmodule Cardian.CardRegistry do
   @impl true
   def init(_) do
     Logger.info("Starting Card Registry")
-    cards = :ets.new(:cards, [:set, :protected, :named_table, read_concurrency: true])
-    sets = :ets.new(:sets, [:set, :protected, :named_table, read_concurrency: true])
+    :cards = :ets.new(:cards, [:set, :protected, :named_table, read_concurrency: true])
+    :sets = :ets.new(:sets, [:set, :protected, :named_table, read_concurrency: true])
+    :index = :ets.new(:index, [:set, :protected, :named_table, read_concurrency: true])
 
     Process.send(self(), :update_registry, [])
-    {:ok, {cards, sets}}
+    {:ok, nil}
   end
 
   @impl true
-  def handle_call({:get_card_by_id, id}, _from, {cards, sets}) do
-    {:reply, :ets.lookup(cards, id), {cards, sets}}
-  end
+  def handle_info(:update_registry, _) do
+    update_cards()
+    update_sets()
+    generate_index()
 
-  @impl true
-  def handle_call({:get_set_by_id, id}, _from, {cards, sets}) do
-    {:reply, :ets.lookup(sets, id), {cards, sets}}
-  end
-
-  @impl true
-  def handle_call(:get_cards, _from, {cards, sets}) do
-    {:reply, :ets.tab2list(cards), {cards, sets}}
-  end
-
-  @impl true
-  def handle_info(:update_registry, {cards, sets}) do
-    update_cards(cards)
-    update_sets(sets)
     schedule_update()
-    {:noreply, {cards, sets}}
+    {:noreply, nil}
   rescue
     err ->
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
       Logger.error("Update failed. Rescheduling...")
       schedule_update()
-      {:noreply, {cards, sets}}
+      {:noreply, nil}
   end
 
-  defp update_sets(sets) do
+  defp update_sets() do
     new_sets = Masterduelmeta.get_all_sets()
 
     true =
       :ets.insert(
-        sets,
+        :sets,
         [
           {"61fc6622c491eb1813d4c85c",
            %Cardian.Model.Set{
@@ -110,10 +111,30 @@ defmodule Cardian.CardRegistry do
     Logger.info("Sets updated")
   end
 
-  defp update_cards(cards) do
+  defp update_cards() do
     new_cards = Masterduelmeta.get_all_cards()
-    true = :ets.insert(cards, Enum.map(new_cards, &{&1.id, &1}))
+    # true = :ets.insert(:cards, Enum.map(new_cards, &{&1.id, &1, tokenize_string(&1.name)}))
+    true = :ets.insert(:cards, Enum.map(new_cards, &{&1.id, &1}))
     Logger.info("Cards updated")
+  end
+
+  defp generate_index() do
+    index =
+      get_cards()
+      |> Stream.flat_map(fn card ->
+        card.name
+        |> normalize_string()
+        |> then(&[&1 | tokenize_string(&1)])
+        |> Stream.map(&%{token: &1, id: card.id})
+      end)
+      |> Enum.reduce(%{}, fn elem, acc ->
+        Map.update(acc, elem.token, MapSet.new([elem.id]), &MapSet.put(&1, elem.id))
+      end)
+      |> Map.to_list()
+
+    true = :ets.insert(:index, index)
+
+    Logger.info("Index generated")
   end
 
   defp schedule_update() do

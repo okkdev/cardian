@@ -36,7 +36,12 @@ defmodule Cardian.Interactions do
           data: %{name: "card", options: [%{name: "name", value: query, focused: true}]}
         } = interaction
       ) do
-    cards = CardRegistry.search_card(query)
+    cards =
+      if String.length(query) > 0 do
+        CardRegistry.search_card(query)
+      else
+        []
+      end
 
     Api.create_interaction_response!(interaction, %{
       type: 8,
