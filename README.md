@@ -4,7 +4,7 @@ Yu-Gi-Oh! Master Duel Discord Bot
 
 Fetches data from the [Master Duel Meta](https://masterduelmeta.com/) API
 
-### [-> Invite Bot <-](https://discord.com/api/oauth2/authorize?client_id=944183782745997362&permissions=3072&scope=applications.commands%20bot)
+### [-> Invite Bot <-](https://discord.com/api/oauth2/authorize?client_id=944183782745997362&permissions=274878221376&scope=applications.commands%20bot)
 
 ## Features
 
