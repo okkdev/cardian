@@ -74,7 +74,7 @@ defmodule Cardian.Interactions do
             #{inspect(msg)}
             """)
 
-            raise(err)
+            raise(inspect(err))
         end
 
       [] ->

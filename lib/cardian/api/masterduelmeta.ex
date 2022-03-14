@@ -77,7 +77,7 @@ defmodule Cardian.Api.Masterduelmeta do
         String.to_integer(res.body)
 
       {:error, reason} ->
-        raise(reason)
+        raise(inspect(reason))
     end
   end
 
@@ -110,7 +110,7 @@ defmodule Cardian.Api.Masterduelmeta do
         String.to_integer(res.body)
 
       {:error, reason} ->
-        raise(reason)
+        raise(inspect(reason))
     end
   end
 
@@ -137,7 +137,7 @@ defmodule Cardian.Api.Masterduelmeta do
         Jason.decode!(res.body)
 
       {:error, reason} ->
-        raise(reason)
+        raise(inspect(reason))
     end
   end
 
