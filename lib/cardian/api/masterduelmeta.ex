@@ -220,8 +220,9 @@ defmodule Cardian.Api.Masterduelmeta do
       "Fusion" -> :fusion
       "Ritual" -> :ritual
       "Link" -> :link
-      # Get the second type of pendulum monsters as this is used for color and level name
+      # Skip Pendulum and Flip monsters as this is used for color and level name
       "Pendulum" -> get_monster_type(types)
+      "Flip" -> get_monster_type(types)
       _ -> nil
     end
   end
