@@ -34,6 +34,8 @@ defmodule Cardian.CardRegistry do
     |> Enum.map(&elem(&1, 1))
   end
 
+  def search_card(""), do: []
+
   def search_card(query) when is_binary(query) do
     query
     |> normalize_string()
