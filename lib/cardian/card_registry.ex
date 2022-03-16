@@ -90,32 +90,44 @@ defmodule Cardian.CardRegistry do
   end
 
   defp update_sets() do
-    new_sets = Masterduelmeta.get_all_sets()
+    sets =
+      [
+        %Cardian.Model.Set{
+          id: "61fc6622c491eb1813d4c85c",
+          name: "Duel Result"
+        },
+        %Cardian.Model.Set{
+          id: "61ef0297c65dc7a88d9faa7d",
+          name: "Solo Mode Reward"
+        },
+        %Cardian.Model.Set{
+          id: "misplay",
+          name: "Not reading",
+          url: "https://www.yugioh-card.com/en/rulebook/index.html"
+        }
+      ] ++ Masterduelmeta.get_all_sets()
 
-    true =
-      :ets.insert(
-        :sets,
-        [
-          {"61fc6622c491eb1813d4c85c",
-           %Cardian.Model.Set{
-             id: "61fc6622c491eb1813d4c85c",
-             name: "Duel Result"
-           }},
-          {"61ef0297c65dc7a88d9faa7d",
-           %Cardian.Model.Set{
-             id: "61ef0297c65dc7a88d9faa7d",
-             name: "Solo Mode Reward"
-           }}
-        ] ++
-          Enum.map(new_sets, &{&1.id, &1})
-      )
+    true = :ets.insert(:sets, Enum.map(sets, &{&1.id, &1}))
 
     Logger.info("Sets updated")
   end
 
   defp update_cards() do
-    new_cards = Masterduelmeta.get_all_cards()
-    true = :ets.insert(:cards, Enum.map(new_cards, &{&1.id, &1}))
+    cards = [
+      %Cardian.Model.Card{
+        id: "skill-issue",
+        url: "https://www.wikihow.com/Play-Yu-Gi-Oh!",
+        name: "Skill Issue",
+        type: :spell,
+        status: "<:limited:948990713272602695>",
+        race: "<:equip:948992874039623741>",
+        description: "The equipped player has issues with their skill.",
+        sets: ["misplay"]
+      }
+      | Masterduelmeta.get_all_cards()
+    ]
+
+    true = :ets.insert(:cards, Enum.map(cards, &{&1.id, &1}))
     Logger.info("Cards updated")
   end
 
