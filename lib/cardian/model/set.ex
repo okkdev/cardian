@@ -1,7 +1,9 @@
 defmodule Cardian.Model.Set do
   defstruct [
     :id,
+    :type,
     :name,
-    :url
+    :url,
+    :image_url
   ]
 end

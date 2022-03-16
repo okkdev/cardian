@@ -145,7 +145,7 @@ defmodule Cardian.Api.Masterduelmeta do
     {pendulum_effect, description} = parse_effects(resp["description"])
 
     %Card{
-      id: resp["_id"],
+      id: resp["konamiID"],
       type: get_card_type(resp["type"]),
       race: parse_card_race(resp["race"]),
       monster_type: get_monster_type(resp["monsterType"]),
@@ -171,7 +171,9 @@ defmodule Cardian.Api.Masterduelmeta do
     %Set{
       id: resp["_id"],
       name: resp["name"],
-      url: get_set_link(resp["linkedArticle"]["url"])
+      type: resp["type"],
+      url: get_set_link(resp["linkedArticle"]["url"]),
+      image_url: "https://s3.duellinksmeta.com" <> resp["bannerImage"]
     }
   end
 
