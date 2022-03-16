@@ -115,7 +115,6 @@ defmodule Cardian.CardRegistry do
 
   defp update_cards() do
     new_cards = Masterduelmeta.get_all_cards()
-    # true = :ets.insert(:cards, Enum.map(new_cards, &{&1.id, &1, tokenize_string(&1.name)}))
     true = :ets.insert(:cards, Enum.map(new_cards, &{&1.id, &1}))
     Logger.info("Cards updated")
   end
