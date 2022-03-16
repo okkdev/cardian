@@ -38,7 +38,7 @@ defmodule Cardian.Api.Masterduelmeta do
   }
 
   @card_type_mapping %{
-    "Normal" => "<:normal:949015950378811412>",
+    "Normal" => "",
     "Quick-Play" => "<:quickplay:948992874366771240>",
     "Ritual" => "<:ritual:948992874580680786>",
     "Field" => "<:field:948992874169630750>",

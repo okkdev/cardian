@@ -4,6 +4,11 @@ defmodule Cardian.Builder do
   alias Cardian.Model.Card
   alias Cardian.CardRegistry
 
+  @spell_trap_icons %{
+    spell: "<:spell:948992874438070342>",
+    trap: "<:trap:948992874438074428>"
+  }
+
   def build_card_message(%Card{} = card) do
     embed =
       %Embed{}
@@ -80,7 +85,7 @@ defmodule Cardian.Builder do
       embed,
       Enum.join(
         [
-          "**Type**: #{card.race} #{put_card_rarity(card.rarity)}",
+          "**Type**: #{@spell_trap_icons[card.type]} #{card.race} #{put_card_rarity(card.rarity)}",
           "**Status**: #{card.status}"
         ],
         "\n"
