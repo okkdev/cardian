@@ -22,7 +22,7 @@ defmodule Cardian.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:nostrum, "~> 0.5.1"},
+      {:nostrum, "~> 0.5.0"},
       {:finch, "~> 0.10.2"}
     ]
   end
