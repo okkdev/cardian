@@ -21,6 +21,12 @@ defmodule Cardian.CardRegistry do
     |> Enum.map(&elem(&1, 1))
   end
 
+  def get_sets() do
+    :sets
+    |> :ets.tab2list()
+    |> Enum.map(&elem(&1, 1))
+  end
+
   def get_card(query) when is_binary(query) do
     case get_card_by_id(query) do
       [] -> search_card(query)

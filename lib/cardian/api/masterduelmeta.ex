@@ -4,16 +4,16 @@ defmodule Cardian.Api.Masterduelmeta do
   @url "https://www.masterduelmeta.com/api/v1"
 
   @rarity_mapping %{
-    "N" => "<:normalrare:948990033321414678>",
-    "R" => "<:rare:948990141786095667>",
-    "SR" => "<:superrare:948990076111712356>",
-    "UR" => "<:ultrarare:948990098920333332>"
+    "N" => :normal,
+    "R" => :rare,
+    "SR" => :super,
+    "UR" => :ultra
   }
 
   @status_mapping %{
-    "Limited 2" => "<:semilimited:948990692842156043>",
-    "Limited 1" => "<:limited:948990713272602695>",
-    "Forbidden" => "<:forbidden:948990744373387386>"
+    "Limited 2" => :semilimited,
+    "Limited 1" => :limited,
+    "Forbidden" => :forbidden
   }
 
   @arrow_mapping %{
@@ -25,26 +25,6 @@ defmodule Cardian.Api.Masterduelmeta do
     "Bottom-Left" => "↙️",
     "Bottom" => "⬇️",
     "Bottom-Right" => "↘️"
-  }
-
-  @attribute_mapping %{
-    "DARK" => "<:DARK:948992874400346152>",
-    "DIVINE" => "<:DIVINE:948992874089947136>",
-    "EARTH" => "<:EARTH:948992874442285096>",
-    "FIRE" => "<:FIRE:948992874375176212>",
-    "LIGHT" => "<:LIGHT:948992874396151879>",
-    "WATER" => "<:WATER:948992874136096768>",
-    "WIND" => "<:WIND:948992874123505775>"
-  }
-
-  @card_type_mapping %{
-    "Normal" => "",
-    "Quick-Play" => "<:quickplay:948992874366771240>",
-    "Ritual" => "<:ritual:948992874580680786>",
-    "Field" => "<:field:948992874169630750>",
-    "Equip" => "<:equip:948992874039623741>",
-    "Continuous" => "<:continuous:948992874421305385>",
-    "Counter" => "<:counter:948992874400321617>"
   }
 
   def get_all_cards() do
@@ -147,10 +127,10 @@ defmodule Cardian.Api.Masterduelmeta do
     %Card{
       id: resp["konamiID"],
       type: get_card_type(resp["type"]),
-      race: parse_card_race(resp["race"]),
+      race: resp["race"],
       monster_type: get_monster_type(resp["monsterType"]),
       monster_types: resp["monsterType"],
-      attribute: @attribute_mapping[resp["attribute"]],
+      attribute: resp["attribute"],
       level: resp["level"] || resp["linkRating"],
       name: resp["name"],
       description: description,
@@ -197,12 +177,6 @@ defmodule Cardian.Api.Masterduelmeta do
   end
 
   defp parse_link_arrows(_), do: nil
-
-  defp parse_card_race(race) when is_map_key(@card_type_mapping, race) do
-    @card_type_mapping[race]
-  end
-
-  defp parse_card_race(race), do: race
 
   defp get_card_type(type) do
     case type do

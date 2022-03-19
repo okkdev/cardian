@@ -9,6 +9,39 @@ defmodule Cardian.Builder do
     trap: "<:trap:948992874438074428>"
   }
 
+  @rarity_icons %{
+    normal: "<:normalrare:948990033321414678>",
+    rare: "<:rare:948990141786095667>",
+    super: "<:superrare:948990076111712356>",
+    ultra: "<:ultrarare:948990098920333332>"
+  }
+
+  @status_icons %{
+    semilimited: "<:semilimited:948990692842156043>",
+    limited: "<:limited:948990713272602695>",
+    forbidden: "<:forbidden:948990744373387386>"
+  }
+
+  @attribute_icons %{
+    "DARK" => "<:DARK:948992874400346152>",
+    "DIVINE" => "<:DIVINE:948992874089947136>",
+    "EARTH" => "<:EARTH:948992874442285096>",
+    "FIRE" => "<:FIRE:948992874375176212>",
+    "LIGHT" => "<:LIGHT:948992874396151879>",
+    "WATER" => "<:WATER:948992874136096768>",
+    "WIND" => "<:WIND:948992874123505775>"
+  }
+
+  @card_type_icons %{
+    "Normal" => "",
+    "Quick-Play" => "<:quickplay:948992874366771240>",
+    "Ritual" => "<:ritual:948992874580680786>",
+    "Field" => "<:field:948992874169630750>",
+    "Equip" => "<:equip:948992874039623741>",
+    "Continuous" => "<:continuous:948992874421305385>",
+    "Counter" => "<:counter:948992874400321617>"
+  }
+
   def build_card_message(%Card{} = card) do
     embed =
       %Embed{}
@@ -71,9 +104,9 @@ defmodule Cardian.Builder do
       embed,
       Enum.join(
         [
-          "**Attribute**: #{card.attribute} #{put_card_rarity(card.rarity)}",
+          "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity)}",
           "**#{level}**: #{card.level} **Type**: #{Enum.join([card.race | card.monster_types], "/")}",
-          "**Status**: #{card.status}"
+          "**Status**: #{@status_icons[card.status]}"
         ],
         "\n"
       )
@@ -85,16 +118,16 @@ defmodule Cardian.Builder do
       embed,
       Enum.join(
         [
-          "**Type**: #{@spell_trap_icons[card.type]} #{card.race} #{put_card_rarity(card.rarity)}",
-          "**Status**: #{card.status}"
+          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]} #{put_card_rarity(card.rarity)}",
+          "**Status**: #{@status_icons[card.status]}"
         ],
         "\n"
       )
     )
   end
 
-  defp put_card_rarity(rarity) when is_binary(rarity) do
-    "**Rarity**: " <> rarity
+  defp put_card_rarity(rarity) when is_atom(rarity) do
+    "**Rarity**: " <> @rarity_icons[rarity]
   end
 
   defp put_card_rarity(_), do: ""
