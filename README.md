@@ -36,6 +36,8 @@ docker exec cardian /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()
 
 #### 🚨 It can take up to 1h to register application commands
 
+#### 🚨 Emotes are currently hardcoded and will probably stop working
+
 ### Environment variables
 
 - `CARDIAN_TOKEN`: Discord bot token
