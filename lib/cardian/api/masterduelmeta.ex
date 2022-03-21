@@ -27,6 +27,14 @@ defmodule Cardian.Api.Masterduelmeta do
     "Bottom-Right" => "↘️"
   }
 
+  @set_type_mapping %{
+    "Normal Pack" => :normal_pack,
+    "Selection Pack" => :selection_pack,
+    "Bonus Pack" => :bonus_pack,
+    "Secret Pack" => :secret_pack,
+    "Structure Deck" => :structure_deck
+  }
+
   def get_all_cards() do
     pages = ceil(get_card_amount() / 3000)
 
@@ -151,7 +159,7 @@ defmodule Cardian.Api.Masterduelmeta do
     %Set{
       id: resp["_id"],
       name: resp["name"],
-      type: resp["type"],
+      type: @set_type_mapping[resp["type"]],
       url: get_set_link(resp["linkedArticle"]["url"]),
       image_url: "https://s3.duellinksmeta.com" <> resp["bannerImage"]
     }

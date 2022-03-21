@@ -71,9 +71,10 @@ defmodule Cardian.Builder do
     }
   end
 
-  def build_autocomplete_choices(cards) do
+  # This is used by cards and sets need to have id and name
+  def build_autocomplete_choices(choices) do
     choices =
-      cards
+      choices
       |> Stream.take(25)
       |> Stream.map(&%{name: &1.name, value: &1.id})
       |> Enum.to_list()
@@ -83,10 +84,37 @@ defmodule Cardian.Builder do
     }
   end
 
+  def build_open_packs_message(cards, pack, amount) when is_integer(amount) do
+    embeds = [
+      %Embed{}
+      |> put_title("**UR** <:ultrarare:948990098920333332>")
+      |> put_color(9_699_539)
+      |> put_description(build_pulled_cards(cards, :ultra)),
+      %Embed{}
+      |> put_title("**SR** <:superrare:948990076111712356>")
+      |> put_color(16_766_720)
+      |> put_description(build_pulled_cards(cards, :super)),
+      %Embed{}
+      |> put_title("**R** <:rare:948990141786095667>")
+      |> put_color(255)
+      |> put_description(build_pulled_cards(cards, :rare)),
+      %Embed{}
+      |> put_title("**N** <:normalrare:948990033321414678>")
+      |> put_description(build_pulled_cards(cards, :normal))
+    ]
+
+    %{
+      content: """
+      __**Pulled #{amount}x [#{pack.name}](#{pack.url})**__
+      """,
+      embeds: embeds
+    }
+  end
+
   defp try_put_field(embed, title, content, inline \\ nil)
 
   defp try_put_field(embed, title, content, inline)
-       when is_binary(content) or is_integer(content) do
+       when (is_binary(content) and content != "") or is_integer(content) do
     put_field(embed, title, content, inline)
   end
 
@@ -168,6 +196,17 @@ defmodule Cardian.Builder do
   end
 
   defp build_sets(_), do: "Unobtainable"
+
+  defp build_pulled_cards(cards, rarity) when is_atom(rarity) do
+    cards
+    |> Stream.filter(&(&1.rarity == rarity))
+    |> Enum.frequencies()
+    |> Enum.map(fn {card, freq} ->
+      "#{freq}x #{card.name}"
+      # "#{freq}x [#{card.name}](#{card.url})"
+    end)
+    |> Enum.join("\n")
+  end
 
   defp try_put_color(embed, color) when is_integer(color) do
     put_color(embed, color)

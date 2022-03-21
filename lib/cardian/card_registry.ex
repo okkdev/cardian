@@ -27,6 +27,16 @@ defmodule Cardian.CardRegistry do
     |> Enum.map(&elem(&1, 1))
   end
 
+  def search_set(query) when is_binary(query) do
+    get_sets()
+    |> Enum.filter(
+      &String.contains?(
+        normalize_string(&1.name),
+        normalize_string(query)
+      )
+    )
+  end
+
   def get_card(query) when is_binary(query) do
     case get_card_by_id(query) do
       [] -> search_card(query)
