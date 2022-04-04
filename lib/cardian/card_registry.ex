@@ -125,8 +125,8 @@ defmodule Cardian.CardRegistry do
         url: "https://www.wikihow.com/Play-Yu-Gi-Oh!",
         name: "Skill Issue",
         type: :spell,
-        status: "<:limited:948990713272602695>",
-        race: "<:equip:948992874039623741>",
+        status: :limited,
+        race: "Equip",
         description: "The equipped player has issues with their skill.",
         sets: ["misplay"]
       }

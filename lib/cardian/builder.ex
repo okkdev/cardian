@@ -126,7 +126,7 @@ defmodule Cardian.Builder do
     )
   end
 
-  defp put_card_rarity(rarity) when is_atom(rarity) do
+  defp put_card_rarity(rarity) when is_map_key(@rarity_icons, rarity) do
     "**Rarity**: " <> @rarity_icons[rarity]
   end
 
