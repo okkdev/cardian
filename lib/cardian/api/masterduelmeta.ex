@@ -99,6 +99,8 @@ defmodule Cardian.Api.Masterduelmeta do
     |> URI.encode()
   end
 
+  defp get_image(_), do: nil
+
   defp get_card_link(card_name) when is_binary(card_name) do
     ("https://www.masterduelmeta.com/cards/" <> card_name)
     |> URI.encode()

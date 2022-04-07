@@ -64,6 +64,21 @@ defmodule Cardian.Builder do
     }
   end
 
+  def build_art_message(%Card{} = card, image_url) when is_binary(image_url) do
+    embed =
+      %Embed{}
+      |> put_title(card.name)
+      |> put_url(card.url)
+      |> put_image(image_url)
+      |> try_put_color(get_card_color(card))
+
+    %{
+      embeds: [
+        embed
+      ]
+    }
+  end
+
   def build_user_message(body) do
     %{
       content: body,
