@@ -18,7 +18,9 @@ Card suggestions with fuzzy searching
 
 ![card info](screenshots/embed.png)
 
-## Run your own Cardian Docker container
+### Card art
+
+## Docker container
 
 Create a Discord application and get the bot token. ([More info here](https://discord.com/developers/docs/intro))
 
@@ -44,6 +46,10 @@ docker exec cardian /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()
 - `CARDIAN_UPDATE_INTERVAL`: Card cache update interval in minutes. Default: 120
 
 ## Changelog
+
+### 4.0
+
+Added `/art` command. This command embeds card artwork. The art is dumped directly from Master Duel then upscaled using Waifu2x and uploaded to an s3 bucket.
 
 ### 3.0
 
