@@ -139,7 +139,7 @@ defmodule Cardian.Interactions do
           _ ->
             Api.edit_interaction_response!(
               interaction,
-              Builder.build_user_message("Art for `#{card}` not found... :pensive:")
+              Builder.build_user_message("Art for `#{c.name}` not found... :pensive:")
             )
         end
 
