@@ -121,7 +121,7 @@ defmodule Cardian.Builder do
         [
           "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity)}",
           "**#{level}**: #{card.level} **Type**: #{Enum.join([card.race | card.monster_types], "/")}",
-          "**Status**: #{@status_icons[card.status]}"
+          "**Status**: #{put_card_status(card.status)}"
         ],
         "\n"
       )
@@ -134,7 +134,7 @@ defmodule Cardian.Builder do
       Enum.join(
         [
           "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]} #{put_card_rarity(card.rarity)}",
-          "**Status**: #{@status_icons[card.status]}"
+          "**Status**: #{put_card_status(card.status)}"
         ],
         "\n"
       )
@@ -146,6 +146,12 @@ defmodule Cardian.Builder do
   end
 
   defp put_card_rarity(_), do: ""
+
+  defp put_card_status(status) when is_map_key(@status_icons, status) do
+    @status_icons[status]
+  end
+
+  defp put_card_status(_), do: "Unlimited"
 
   defp put_card_description(embed, %Card{type: :monster} = card) do
     if Enum.member?(card.monster_types, "Normal") do
