@@ -200,8 +200,8 @@ defmodule Cardian.Builder do
 
   defp get_card_color(%Card{type: :trap}), do: 12_343_940
 
-  defp get_card_color(%Card{type: :monster} = card) do
-    case card.monster_type do
+  defp get_card_color(%Card{type: :monster, monster_type: type}) do
+    case type do
       :normal ->
         14_995_823
 
