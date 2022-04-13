@@ -139,7 +139,9 @@ defmodule Cardian.Interactions do
           _ ->
             Api.edit_interaction_response!(
               interaction,
-              Builder.build_user_message("Art for `#{c.name}` not found... :pensive:")
+              Builder.build_user_message(
+                "Art for `#{c.name}` not found... :pensive: (Art is only available for cards that are in Master Duel)"
+              )
             )
         end
 
