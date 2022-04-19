@@ -123,6 +123,8 @@ defmodule Cardian.CardRegistry do
       %Cardian.Model.Card{
         id: "skill-issue",
         url: "https://www.wikihow.com/Play-Yu-Gi-Oh!",
+        # Thanks @Raseruuu#9701 for the art
+        image_url: "https://ygo.s3.lain.dev/skill-issue.webp",
         name: "Skill Issue",
         type: :spell,
         status: :limited,
