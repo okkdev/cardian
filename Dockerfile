@@ -2,6 +2,9 @@ FROM elixir:1.13-alpine AS builder
 
 ENV MIX_ENV=prod
 
+RUN apk update && \
+  apk add --no-cache git
+
 RUN mix local.hex --force && \
   mix local.rebar --force
 
