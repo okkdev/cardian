@@ -124,7 +124,7 @@ defmodule Cardian.CardRegistry do
         id: "skill-issue",
         url: "https://www.wikihow.com/Play-Yu-Gi-Oh!",
         # Thanks @Raseruuu#9701 for the art
-        image_url: "https://ygo.s3.lain.dev/skill-issue.webp",
+        image_url: "https://s3.lain.dev/ygo/skill-issue.webp",
         name: "Skill Issue",
         type: :spell,
         status: :limited,

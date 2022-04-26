@@ -15,7 +15,7 @@ defmodule Cardian.Api.Images do
   end
 
   defp image_url(card_id) when is_binary(card_id) do
-    "https://ygo.s3.lain.dev/#{card_id}.webp"
+    "https://s3.lain.dev/ygo/#{card_id}.webp"
     |> URI.encode()
   end
 end
