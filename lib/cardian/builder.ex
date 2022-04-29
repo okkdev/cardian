@@ -3,6 +3,7 @@ defmodule Cardian.Builder do
   alias Nostrum.Struct.Embed
   alias Cardian.Model.Card
   alias Cardian.CardRegistry
+  alias Cardian.Api.Images
 
   @spell_trap_icons %{
     spell: "<:spell:948992874438070342>",
@@ -47,7 +48,12 @@ defmodule Cardian.Builder do
       %Embed{}
       |> put_title(card.name)
       |> put_url(card.url)
-      |> put_thumbnail(card.image_url)
+      |> put_thumbnail(
+        case Images.get_image_url(card) do
+          {:ok, url} -> url
+          _ -> card.image_url
+        end
+      )
       |> try_put_color(get_card_color(card))
       |> put_card_metadata(card)
       |> try_put_field("Pendulum Effect", card.pendulum_effect)
