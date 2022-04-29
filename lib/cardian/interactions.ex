@@ -113,7 +113,7 @@ defmodule Cardian.Interactions do
 
     case CardRegistry.get_card(card) do
       [c | _] ->
-        case Cardian.Api.Images.get_image(c.id) do
+        case Cardian.Api.Images.get_image_url(c) do
           {:ok, image_url} ->
             msg = Builder.build_art_message(c, image_url)
 
