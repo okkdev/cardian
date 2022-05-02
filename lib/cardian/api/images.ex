@@ -19,7 +19,15 @@ defmodule Cardian.Api.Images do
     image_url
     |> then(&Finch.build(:head, &1))
     |> Finch.request(MyFinch)
-    |> then(fn {:ok, %{status: status}} -> status == 200 end)
+    |> then(fn res ->
+      case res do
+        {:ok, %{status: status}} ->
+          status == 200
+
+        _ ->
+          false
+      end
+    end)
   end
 
   defp image_url(card_id) when is_binary(card_id) do

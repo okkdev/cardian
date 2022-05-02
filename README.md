@@ -22,6 +22,8 @@ Card suggestions with fuzzy searching
 
 ## Docker container
 
+#### 🚨 The ongoing development made the bot reliant on other services that I host, which makes self hosting not a great option. 
+
 Create a Discord application and get the bot token. ([More info here](https://discord.com/developers/docs/intro))
 
 Run the container, from [Docker Hub](https://hub.docker.com/repository/docker/okkdev/cardian), with this command:
