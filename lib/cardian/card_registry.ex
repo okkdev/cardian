@@ -159,10 +159,19 @@ defmodule Cardian.CardRegistry do
   end
 
   defp schedule_update() do
+    time =
+      if :cards |> :ets.tab2list() |> Enum.count() > 0 do
+        :timer.minutes(Application.fetch_env!(:cardian, :update_interval))
+      else
+        :timer.seconds(5)
+      end
+
+    Logger.info("Scheduling update in #{time}")
+
     Process.send_after(
       :card_registry,
       :update_registry,
-      :timer.minutes(Application.fetch_env!(:cardian, :update_interval))
+      time
     )
   end
 end
