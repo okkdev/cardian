@@ -22,9 +22,7 @@ defmodule Cardian.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:nostrum,
-       git: "https://github.com/Kraigie/nostrum.git",
-       ref: "13a3927c872c1540266e9f1ba4bcad4182baa9bf"},
+      {:nostrum, "~> 0.6.0"},
       {:finch, "~> 0.10.2"}
     ]
   end
