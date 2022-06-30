@@ -171,12 +171,14 @@ defmodule Cardian.Builder do
     put_field(embed, "Effect", card.description)
   end
 
-  defp put_monster_atk(embed, %Card{type: :monster, monster_type: :link} = card) do
-    put_field(embed, "ATK", "#{card.atk}", true)
+  defp put_monster_atk(embed, %Card{type: :monster, monster_type: :link, atk: atk})
+       when is_integer(atk) do
+    put_field(embed, "ATK", "#{atk}", true)
   end
 
-  defp put_monster_atk(embed, %Card{type: :monster} = card) do
-    put_field(embed, "ATK / DEF", "#{card.atk} / #{card.def}", true)
+  defp put_monster_atk(embed, %Card{type: :monster, atk: atk, def: def})
+       when is_integer(atk) and is_integer(def) do
+    put_field(embed, "ATK / DEF", "#{atk} / #{def}", true)
   end
 
   defp put_monster_atk(embed, _card), do: embed
