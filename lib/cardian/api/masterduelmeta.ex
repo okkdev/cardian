@@ -42,6 +42,7 @@ defmodule Cardian.Api.Masterduelmeta do
     end)
     |> Stream.filter(&(&1["alternateArt"] != true))
     |> Stream.map(&cast_card/1)
+    |> Stream.filter(&(&1.id != nil))
     |> Enum.to_list()
   end
 
