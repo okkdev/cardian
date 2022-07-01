@@ -182,10 +182,10 @@ defmodule Cardian.Api.Masterduelmeta do
   defp parse_link_arrows(_), do: nil
 
   defp get_card_type(type) do
-    case type do
-      "Monster" -> :monster
-      "Spell" -> :spell
-      "Trap" -> :trap
+    case String.downcase(type) do
+      "monster" -> :monster
+      "spell" -> :spell
+      "trap" -> :trap
       _ -> nil
     end
   end
