@@ -8,7 +8,6 @@ defmodule Cardian.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      {Finch, name: MyFinch},
       Cardian.EventConsumer,
       Cardian.CardRegistry
     ]

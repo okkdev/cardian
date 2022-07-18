@@ -17,8 +17,7 @@ defmodule Cardian.Api.Images do
 
   defp available?(image_url) when is_binary(image_url) do
     image_url
-    |> then(&Finch.build(:head, &1))
-    |> Finch.request(MyFinch)
+    |> then(&Req.request(method: :head, url: &1))
     |> then(fn res ->
       case res do
         {:ok, %{status: status}} ->

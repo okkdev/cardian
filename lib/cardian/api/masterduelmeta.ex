@@ -36,8 +36,7 @@ defmodule Cardian.Api.Masterduelmeta do
         "#{@url}/cards?limit=3000&page=#{page}"
         |> URI.encode()
 
-      Finch.build(:get, url)
-      |> Finch.request(MyFinch)
+      Req.request(url: url)
       |> handle_response()
     end)
     |> Stream.filter(&(&1["alternateArt"] != true))
@@ -51,8 +50,7 @@ defmodule Cardian.Api.Masterduelmeta do
       (@url <> "/cards?collectionCount=true")
       |> URI.encode()
 
-    Finch.build(:get, url)
-    |> Finch.request(MyFinch)
+    Req.request(url: url)
     |> case do
       {:ok, res} ->
         String.to_integer(res.body)
@@ -71,8 +69,7 @@ defmodule Cardian.Api.Masterduelmeta do
         "#{@url}/sets?limit=3000&page=#{page}"
         |> URI.encode()
 
-      Finch.build(:get, url)
-      |> Finch.request(MyFinch)
+      Req.request(url: url)
       |> handle_response()
     end)
     |> Stream.map(&cast_set/1)
@@ -84,8 +81,7 @@ defmodule Cardian.Api.Masterduelmeta do
       (@url <> "/sets?collectionCount=true")
       |> URI.encode()
 
-    Finch.build(:get, url)
-    |> Finch.request(MyFinch)
+    Req.request(url: url)
     |> case do
       {:ok, res} ->
         String.to_integer(res.body)
@@ -117,7 +113,7 @@ defmodule Cardian.Api.Masterduelmeta do
   defp handle_response(resp) do
     case resp do
       {:ok, res} ->
-        Jason.decode!(res.body)
+        res.body
 
       {:error, reason} ->
         raise(inspect(reason))

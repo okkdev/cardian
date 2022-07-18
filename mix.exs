@@ -23,7 +23,7 @@ defmodule Cardian.MixProject do
   defp deps do
     [
       {:nostrum, "~> 0.6.0"},
-      {:finch, "~> 0.10.2"}
+      {:req, "~> 0.3.0"}
     ]
   end
 end
