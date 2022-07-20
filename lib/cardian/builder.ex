@@ -77,6 +77,7 @@ defmodule Cardian.Builder do
       |> put_url(card.url)
       |> put_image(image_url)
       |> try_put_color(get_card_color(card))
+      |> put_ocg_footer(card)
 
     %{
       embeds: [
@@ -85,9 +86,45 @@ defmodule Cardian.Builder do
     }
   end
 
+  defp put_ocg_footer(embed, %Card{ocg: true}) do
+    embed
+    |> put_footer("OCG Art")
+  end
+
+  defp put_ocg_footer(embed, %Card{ocg: false, id: card_id}) do
+    if Images.ocg_available?(card_id) do
+      embed
+      |> put_footer("OCG art available")
+    else
+      embed
+    end
+  end
+
   def build_user_message(body) do
     %{
       content: body,
+      flags: 64
+    }
+  end
+
+  def build_ocg_kofi_reminder_embed(user_id) do
+    embed =
+      %Embed{}
+      |> put_title("Unfortunately you don't have access to OCG art")
+      |> put_description("""
+      To gain access to the OCG art option, please donate to Cardian using the link below.
+      https://ko-fi.com/okkkk/commissions
+
+      This is your user id: `[#{user_id}]`
+      Use it when ordering the OCG art addon.
+
+      Thank you so much for considering to support Cardian!
+      """)
+
+    %{
+      embeds: [
+        embed
+      ],
       flags: 64
     }
   end

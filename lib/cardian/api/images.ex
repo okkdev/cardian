@@ -1,4 +1,13 @@
 defmodule Cardian.Api.Images do
+  # Get OCG art url
+  def get_image_url(%{id: card_id, ocg: true}) do
+    if ocg_available?(card_id) do
+      {:ok, image_url(card_id <> "_ocg")}
+    else
+      {:error, "OCG art not found for this card"}
+    end
+  end
+
   def get_image_url(%{id: card_id, monster_types: types}) do
     if image_url(card_id) |> available?() do
       {:ok, image_url(card_id)}
@@ -13,6 +22,10 @@ defmodule Cardian.Api.Images do
         end
       end
     end
+  end
+
+  def ocg_available?(card_id) do
+    image_url(card_id <> "_ocg") |> available?()
   end
 
   defp available?(image_url) when is_binary(image_url) do

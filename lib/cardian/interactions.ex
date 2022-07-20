@@ -43,14 +43,20 @@ defmodule Cardian.Interactions do
           description: "Search a card by name",
           autocomplete: true,
           required: true
+        },
+        %{
+          type: 5,
+          name: "ocg",
+          description: "Show the OCG art (not available for all cards)"
         }
       ]
     }
   end
 
+  # Handle search autocompletion
   def handle(
         %Interaction{
-          data: %{name: command_name, options: [%{name: "name", value: query, focused: true}]}
+          data: %{name: command_name, options: [%{name: "name", value: query, focused: true} | _]}
         } = interaction
       )
       when command_name in ["card", "art"] do
@@ -62,6 +68,7 @@ defmodule Cardian.Interactions do
     })
   end
 
+  # Handle card command
   def handle(
         %Interaction{data: %{name: "card", options: [%{name: "name", value: card}]}} = interaction
       ) do
@@ -106,13 +113,58 @@ defmodule Cardian.Interactions do
       )
   end
 
+  # Handle premium ocg requests
   def handle(
-        %Interaction{data: %{name: "art", options: [%{name: "name", value: card}]}} = interaction
+        %Interaction{
+          data: %{
+            name: "art",
+            options: [%{name: "name"}, %{name: "ocg", value: true} | _]
+          },
+          user: %{id: user_id}
+        } = interaction
       ) do
+    if Cardian.Api.Bonk.valid_user?(user_id) do
+      handle_art(interaction, true)
+    else
+      Api.create_interaction_response!(
+        interaction,
+        %{
+          type: 4,
+          data: Builder.build_ocg_kofi_reminder_embed(user_id)
+        }
+      )
+    end
+  end
+
+  # Handle regular art calls
+  def handle(%Interaction{data: %{name: "art"}} = interaction) do
+    handle_art(interaction, false)
+  end
+
+  def handle(interaction) do
+    Logger.error("Unknown command: #{inspect(interaction)}")
+
+    Api.edit_interaction_response!(
+      interaction,
+      Builder.build_user_message("Something went wrong... :pensive:")
+    )
+  end
+
+  defp handle_art(
+         %Interaction{
+           data: %{
+             name: "art",
+             options: [%{name: "name", value: card} | _]
+           }
+         } = interaction,
+         ocg
+       ) do
     Api.create_interaction_response!(interaction, %{type: 5})
 
     case CardRegistry.get_card(card) do
       [c | _] ->
+        c = %{c | ocg: ocg}
+
         case Cardian.Api.Images.get_image_url(c) do
           {:ok, image_url} ->
             msg = Builder.build_art_message(c, image_url)
@@ -139,7 +191,9 @@ defmodule Cardian.Interactions do
           _ ->
             Api.edit_interaction_response!(
               interaction,
-              Builder.build_user_message("Art for `#{c.name}` not found... :pensive:")
+              Builder.build_user_message(
+                "#{if c.ocg, do: "OCG "}Art for `#{c.name}` not found... :pensive:"
+              )
             )
         end
 
@@ -158,6 +212,4 @@ defmodule Cardian.Interactions do
         Builder.build_user_message("Something went wrong... :pensive:")
       )
   end
-
-  def handle(_interaction), do: :noop
 end

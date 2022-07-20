@@ -15,6 +15,7 @@ job "cardian" {
 
       env {
         CARDIAN_TOKEN = "discord_bot_token"
+        BONK_URL = "url"
       }
 
       resources {
