@@ -113,10 +113,12 @@ defmodule Cardian.Builder do
       |> put_title("Unfortunately you don't have access to OCG art")
       |> put_description("""
       To gain access to the OCG art option, please donate to Cardian using the link below.
-      https://ko-fi.com/okkkk/commissions
+      https://ko-fi.com/okkkk
 
       This is your user id: `[#{user_id}]`
-      Use it when ordering the OCG art addon.
+      Please include it (including the brackets) in your donation message!
+      If done so, you should get access the OCG art option immediately.
+      [More details here](https://ko-fi.com/post/Cardian-OCG-art-E1E4DXD7N)
 
       Thank you so much for considering to support Cardian!
       """)
