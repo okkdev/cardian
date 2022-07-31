@@ -11,6 +11,10 @@ defmodule Cardian.CardRegistry do
     %Cardian.Model.Card{
       id: "88581108",
       name: "VFD"
+    },
+    %Cardian.Model.Card{
+      id: "50588353",
+      name: "Needlefiber"
     }
   ]
 
