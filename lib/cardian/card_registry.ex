@@ -3,6 +3,49 @@ defmodule Cardian.CardRegistry do
   require Logger
   alias Cardian.Api.Masterduelmeta
 
+  @alternate_search_names [
+    %Cardian.Model.Card{
+      id: "88581108",
+      name: "Very Fun Dragon"
+    },
+    %Cardian.Model.Card{
+      id: "88581108",
+      name: "VFD"
+    }
+  ]
+
+  @extra_cards [
+    %Cardian.Model.Card{
+      id: "skill-issue",
+      url: "https://www.wikihow.com/Play-Yu-Gi-Oh!",
+      # Thanks @Raseruuu#9701 for the art
+      image_url: "https://s3.lain.dev/ygo/skill-issue.webp",
+      name: "Skill Issue",
+      type: :spell,
+      status: :limited,
+      race: "Equip",
+      description: "The equipped player has issues with their skill.",
+      sets: ["misplay"]
+    }
+  ]
+
+  # unfortunately hardcoded sets for masterduelmeta that don't get returned by the set endpoint
+  @extra_sets [
+    %Cardian.Model.Set{
+      id: "61fc6622c491eb1813d4c85c",
+      name: "Duel Result"
+    },
+    %Cardian.Model.Set{
+      id: "61ef0297c65dc7a88d9faa7d",
+      name: "Solo Mode Reward"
+    },
+    %Cardian.Model.Set{
+      id: "misplay",
+      name: "Not reading",
+      url: "https://www.yugioh-card.com/en/rulebook/index.html"
+    }
+  ]
+
   # CLIENT
 
   def start_link(_) do
@@ -96,22 +139,7 @@ defmodule Cardian.CardRegistry do
   end
 
   defp update_sets() do
-    sets =
-      [
-        %Cardian.Model.Set{
-          id: "61fc6622c491eb1813d4c85c",
-          name: "Duel Result"
-        },
-        %Cardian.Model.Set{
-          id: "61ef0297c65dc7a88d9faa7d",
-          name: "Solo Mode Reward"
-        },
-        %Cardian.Model.Set{
-          id: "misplay",
-          name: "Not reading",
-          url: "https://www.yugioh-card.com/en/rulebook/index.html"
-        }
-      ] ++ Masterduelmeta.get_all_sets()
+    sets = @extra_sets ++ Masterduelmeta.get_all_sets()
 
     true = :ets.insert(:sets, Enum.map(sets, &{&1.id, &1}))
 
@@ -119,21 +147,7 @@ defmodule Cardian.CardRegistry do
   end
 
   defp update_cards() do
-    cards = [
-      %Cardian.Model.Card{
-        id: "skill-issue",
-        url: "https://www.wikihow.com/Play-Yu-Gi-Oh!",
-        # Thanks @Raseruuu#9701 for the art
-        image_url: "https://s3.lain.dev/ygo/skill-issue.webp",
-        name: "Skill Issue",
-        type: :spell,
-        status: :limited,
-        race: "Equip",
-        description: "The equipped player has issues with their skill.",
-        sets: ["misplay"]
-      }
-      | Masterduelmeta.get_all_cards()
-    ]
+    cards = @extra_cards ++ Masterduelmeta.get_all_cards()
 
     true = :ets.insert(:cards, Enum.map(cards, &{&1.id, &1}))
     Logger.info("Cards updated")
@@ -141,7 +155,7 @@ defmodule Cardian.CardRegistry do
 
   defp generate_index() do
     index =
-      get_cards()
+      (get_cards() ++ @alternate_search_names)
       |> Stream.flat_map(fn card ->
         card.name
         |> normalize_string()
