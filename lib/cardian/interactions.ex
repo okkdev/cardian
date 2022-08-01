@@ -88,10 +88,10 @@ defmodule Cardian.Interactions do
             #{card}
 
             Found Card:
-            #{inspect(c)}
+            #{inspect(c, pretty: true)}
 
             Built Message:
-            #{inspect(msg)}
+            #{inspect(msg, pretty: true)}
             """)
 
             raise(inspect(err))
@@ -142,7 +142,7 @@ defmodule Cardian.Interactions do
   end
 
   def handle(interaction) do
-    Logger.error("Unknown command: #{inspect(interaction)}")
+    Logger.error("Unknown command: #{inspect(interaction, pretty: true)}")
 
     Api.create_interaction_response!(
       interaction,
@@ -182,10 +182,10 @@ defmodule Cardian.Interactions do
                 #{card}
 
                 Found Card:
-                #{inspect(c)}
+                #{inspect(c, pretty: true)}
 
                 Built Message:
-                #{inspect(msg)}
+                #{inspect(msg, pretty: true)}
                 """)
 
                 raise(inspect(err))
