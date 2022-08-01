@@ -26,10 +26,11 @@ Card suggestions with fuzzy searching
 
 Create a Discord application and get the bot token. ([More info here](https://discord.com/developers/docs/intro))
 
-Run the container, from [Docker Hub](https://hub.docker.com/repository/docker/okkdev/cardian), with this command:
+Run the container with this command:
 
 ```sh
-docker run -e CARDIAN_TOKEN=<your-bot-token> okkdev/cardian --name cardian
+docker pull ghcr.io/okkdev/cardian:latest
+docker run -e CARDIAN_TOKEN=<your-bot-token> BONK_URL=<bonk-url> okkdev/cardian --name cardian
 ```
 
 To deploy the application commands run this command once:
@@ -44,10 +45,16 @@ docker exec cardian /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()
 
 ### Environment variables
 
+- `BONK_URL`: This is the URL for the [bonk microservice](https://github.com/okkdev/bonk) which returns the whitelist of users that donated on kofi, used for the OCG art command
 - `CARDIAN_TOKEN`: Discord bot token
 - `CARDIAN_UPDATE_INTERVAL`: Card cache update interval in minutes. Default: 120
 
 ## Changelog
+
+### 5.0
+
+Added OCG art option to the art command with `ocg:true`, which requires a donation over on [Ko-Fi](https://ko-fi.com/okkkk).\
+Ko-Fi triggers a webhook and sends the donation info to [Bonk](https://github.com/okkdev/bonk) which is a microservice that parses the user id included in the donation message and saves it in a database.
 
 ### 4.0
 
@@ -65,14 +72,18 @@ With v2.0 the bot fetches all cards every 2 hours (by default, can be set via en
 
 ## Development
 
-Install dependencies:
+1. Install dependencies:
 
 ```sh
 mix deps.get
 ```
 
-Run the app:
+2. Set env vars.
+
+3. Run the app:
 
 ```sh
 mix run --no-halt
+# or
+iex -S mix
 ```
