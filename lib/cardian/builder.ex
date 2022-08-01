@@ -43,31 +43,24 @@ defmodule Cardian.Builder do
     "Counter" => "<:counter:948992874400321617>"
   }
 
-  def build_card_message(%Card{} = card) do
-    embed =
-      %Embed{}
-      |> put_title(card.name)
-      |> put_url(card.url)
-      |> put_thumbnail(
-        case Images.get_image_url(card) do
-          {:ok, url} -> url
-          _ -> card.image_url
-        end
-      )
-      |> try_put_color(get_card_color(card))
-      |> put_card_metadata(card)
-      |> try_put_field("Pendulum Effect", card.pendulum_effect)
-      |> put_card_description(card)
-      |> try_put_field("Scale", card.scale, true)
-      |> try_put_field("Arrows", card.arrows, true)
-      |> put_monster_atk(card)
-      |> try_put_field("Obtainable from", build_sets(card.sets))
-
-    %{
-      embeds: [
-        embed
-      ]
-    }
+  def build_card_embed(%Card{} = card) do
+    %Embed{}
+    |> put_title(card.name)
+    |> put_url(card.url)
+    |> put_thumbnail(
+      case Images.get_image_url(card) do
+        {:ok, url} -> url
+        _ -> card.image_url
+      end
+    )
+    |> try_put_color(get_card_color(card))
+    |> put_card_metadata(card)
+    |> try_put_field("Pendulum Effect", card.pendulum_effect)
+    |> put_card_description(card)
+    |> try_put_field("Scale", card.scale, true)
+    |> try_put_field("Arrows", card.arrows, true)
+    |> put_monster_atk(card)
+    |> try_put_field("Obtainable from", build_sets(card.sets))
   end
 
   def build_art_message(%Card{} = card, image_url) when is_binary(image_url) do

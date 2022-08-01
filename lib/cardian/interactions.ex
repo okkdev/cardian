@@ -12,6 +12,7 @@ defmodule Cardian.Interactions do
   def get_commands() do
     [
       card_command(),
+      parse_card_command(),
       art_command()
     ]
   end
@@ -29,6 +30,13 @@ defmodule Cardian.Interactions do
           required: true
         }
       ]
+    }
+  end
+
+  def parse_card_command do
+    %{
+      type: 3,
+      name: "Parse cards"
     }
   end
 
@@ -76,7 +84,11 @@ defmodule Cardian.Interactions do
 
     case CardRegistry.get_card(card) do
       [c | _] ->
-        msg = Builder.build_card_message(c)
+        msg = %{
+          embeds: [
+            Builder.build_card_embed(c)
+          ]
+        }
 
         case Api.edit_interaction_response(interaction, msg) do
           {:ok, _} ->
@@ -113,7 +125,63 @@ defmodule Cardian.Interactions do
       )
   end
 
-  # Handle premium ocg requests
+  # Handle right click on message to parse cards in angle brackets < >
+  def handle(
+        %Interaction{
+          data: %{
+            name: "Parse cards",
+            resolved: %{
+              messages: messages
+            }
+          }
+        } = interaction
+      ) do
+    Api.create_interaction_response!(interaction, %{type: 5})
+
+    {:ok, card_names, _, _, _, _} =
+      messages
+      |> Map.values()
+      |> Enum.map(& &1.content)
+      |> List.to_string()
+      |> Cardian.Parser.card_names()
+
+    cards =
+      card_names
+      |> Enum.map(
+        &case CardRegistry.get_card(&1) do
+          [c | _] ->
+            c
+
+          [] ->
+            nil
+        end
+      )
+      |> Enum.dedup()
+      |> Enum.filter(&(&1 != nil))
+      # Limit to 10 cards becuase of embed limit
+      |> Enum.take(10)
+
+    if Enum.empty?(cards) do
+      Api.edit_interaction_response!(
+        interaction,
+        Builder.build_user_message("No cards found... :eyes:")
+      )
+    else
+      Api.edit_interaction_response!(interaction, %{
+        embeds: Enum.map(cards, &Builder.build_card_embed(&1))
+      })
+    end
+  rescue
+    err ->
+      Logger.error(Exception.format(:error, err, __STACKTRACE__))
+
+      Api.edit_interaction_response!(
+        interaction,
+        Builder.build_user_message("Something went wrong... :pensive:")
+      )
+  end
+
+  # Handle premium ocg art requests
   def handle(
         %Interaction{
           data: %{
