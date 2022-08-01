@@ -144,9 +144,12 @@ defmodule Cardian.Interactions do
   def handle(interaction) do
     Logger.error("Unknown command: #{inspect(interaction)}")
 
-    Api.edit_interaction_response!(
+    Api.create_interaction_response!(
       interaction,
-      Builder.build_user_message("Something went wrong... :pensive:")
+      %{
+        type: 4,
+        data: Builder.build_user_message("Something went wrong... :pensive:")
+      }
     )
   end
 
