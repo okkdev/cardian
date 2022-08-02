@@ -36,7 +36,7 @@ defmodule Cardian.Interactions do
   def parse_card_command do
     %{
       type: 3,
-      name: "Parse cards"
+      name: "Embed cards"
     }
   end
 
@@ -129,47 +129,67 @@ defmodule Cardian.Interactions do
   def handle(
         %Interaction{
           data: %{
-            name: "Parse cards",
+            name: "Embed cards",
             resolved: %{
               messages: messages
             }
           }
         } = interaction
       ) do
-    Api.create_interaction_response!(interaction, %{type: 5})
-
-    {:ok, card_names, _, _, _, _} =
+    [message | _] =
       messages
       |> Map.values()
-      |> Enum.map(& &1.content)
-      |> List.to_string()
+
+    {:ok, card_names, _, _, _, _} =
+      message.content
       |> Cardian.Parser.card_names()
 
-    cards =
-      card_names
-      |> Enum.map(
-        &case CardRegistry.get_card(&1) do
-          [c | _] ->
-            c
+    case card_names do
+      [] ->
+        Api.create_interaction_response!(
+          interaction,
+          %{
+            type: 4,
+            data:
+              Builder.build_user_message(
+                "No card names found. Did you forget to use angle brackets, like this: `<card name>`?"
+              )
+          }
+        )
 
-          [] ->
-            nil
+      card_names ->
+        Api.create_interaction_response!(interaction, %{type: 5})
+
+        cards =
+          card_names
+          |> Enum.map(
+            &case CardRegistry.get_card(&1) do
+              [c | _] ->
+                c
+
+              [] ->
+                nil
+            end
+          )
+          |> Enum.dedup()
+          |> Enum.filter(&(not is_nil(&1)))
+          # Limit to 10 cards becuase of embed limit
+          |> Enum.take(10)
+
+        if Enum.empty?(cards) do
+          Api.edit_interaction_response!(
+            interaction,
+            Builder.build_user_message("Cards not found... :pensive:")
+          )
+        else
+          Api.delete_interaction_response!(interaction)
+
+          Api.create_message!(
+            message.channel_id,
+            embeds: Enum.map(cards, &Builder.build_card_embed(&1)),
+            message_reference: %{message_id: message.id}
+          )
         end
-      )
-      |> Enum.dedup()
-      |> Enum.filter(&(&1 != nil))
-      # Limit to 10 cards becuase of embed limit
-      |> Enum.take(10)
-
-    if Enum.empty?(cards) do
-      Api.edit_interaction_response!(
-        interaction,
-        Builder.build_user_message("No cards found... :eyes:")
-      )
-    else
-      Api.edit_interaction_response!(interaction, %{
-        embeds: Enum.map(cards, &Builder.build_card_embed(&1))
-      })
     end
   rescue
     err ->
