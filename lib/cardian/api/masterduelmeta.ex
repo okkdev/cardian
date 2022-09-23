@@ -31,7 +31,7 @@ defmodule Cardian.Api.Masterduelmeta do
     pages = ceil(get_card_amount() / 3000)
 
     1..pages
-    |> Stream.flat_map(fn page ->
+    |> Task.async_stream(fn page ->
       url =
         "#{@url}/cards?limit=3000&page=#{page}"
         |> URI.encode()
@@ -39,8 +39,10 @@ defmodule Cardian.Api.Masterduelmeta do
       Req.request(url: url)
       |> handle_response()
     end)
+    |> Stream.flat_map(fn {:ok, res} -> res end)
     |> Stream.filter(&(&1["alternateArt"] != true))
-    |> Stream.map(&cast_card/1)
+    |> Task.async_stream(&cast_card/1)
+    |> Stream.map(fn {:ok, card} -> card end)
     |> Stream.filter(&(&1.id != nil))
     |> Enum.to_list()
   end

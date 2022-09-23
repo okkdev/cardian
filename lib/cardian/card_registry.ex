@@ -93,8 +93,8 @@ defmodule Cardian.CardRegistry do
     query
     |> normalize_string()
     |> then(&[&1 | tokenize_string(&1)])
-    |> Stream.flat_map(&:ets.lookup(:index, &1))
-    |> Stream.flat_map(&elem(&1, 1))
+    |> Enum.flat_map(&:ets.lookup(:index, &1))
+    |> Enum.flat_map(&elem(&1, 1))
     |> Enum.frequencies()
     |> Enum.sort_by(&elem(&1, 1), :desc)
     |> Enum.flat_map(&get_card_by_id(elem(&1, 0)))
@@ -103,7 +103,7 @@ defmodule Cardian.CardRegistry do
   defp tokenize_string(string) when is_binary(string) do
     string
     |> String.graphemes()
-    |> Stream.chunk_every(3, 1, :discard)
+    |> Enum.chunk_every(3, 1, :discard)
     |> Enum.map(&Enum.join(&1))
   end
 
@@ -160,12 +160,13 @@ defmodule Cardian.CardRegistry do
   defp generate_index() do
     index =
       (get_cards() ++ @alternate_search_names)
-      |> Stream.flat_map(fn card ->
+      |> Task.async_stream(fn card ->
         card.name
         |> normalize_string()
         |> then(&[&1 | tokenize_string(&1)])
         |> Stream.map(&%{token: &1, id: card.id})
       end)
+      |> Stream.flat_map(fn {:ok, res} -> res end)
       |> Enum.reduce(%{}, fn elem, acc ->
         Map.update(acc, elem.token, MapSet.new([elem.id]), &MapSet.put(&1, elem.id))
       end)
