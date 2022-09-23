@@ -43,7 +43,7 @@ defmodule Cardian.Interactions do
   def art_command do
     %{
       name: "art",
-      description: "Get Yu-Gi-Oh! Master Duel card art",
+      description: "Get Yu-Gi-Oh! card art",
       options: [
         %{
           type: 3,
