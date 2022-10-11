@@ -44,6 +44,10 @@ defmodule Cardian.CardRegistry do
       name: "Solo Mode Reward"
     },
     %Cardian.Model.Set{
+      id: "633697ab1232ee9557eff405",
+      name: "Craftable Banned Cards"
+    },
+    %Cardian.Model.Set{
       id: "misplay",
       name: "Not reading",
       url: "https://www.yugioh-card.com/en/rulebook/index.html"
