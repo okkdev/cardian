@@ -94,7 +94,16 @@ defmodule Cardian.Interactions do
           {:ok, _} ->
             :ok
 
-          err ->
+          {:error, reason} ->
+            Sentry.capture_exception(reason,
+              extra: %{
+                interaction: "/card",
+                card: card,
+                card_result: Map.from_struct(c),
+                built_message: msg
+              }
+            )
+
             Logger.error("""
             Card name/id:
             #{card}
@@ -106,7 +115,10 @@ defmodule Cardian.Interactions do
             #{inspect(msg, pretty: true)}
             """)
 
-            raise(inspect(err))
+            Api.edit_interaction_response!(
+              interaction,
+              Builder.build_user_message("Something went wrong... :pensive:")
+            )
         end
 
       [] ->
@@ -118,6 +130,7 @@ defmodule Cardian.Interactions do
   rescue
     err ->
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
+      Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
       Api.edit_interaction_response!(
         interaction,
@@ -173,7 +186,7 @@ defmodule Cardian.Interactions do
           )
           |> Enum.dedup()
           |> Enum.filter(&(not is_nil(&1)))
-          # Limit to 10 cards becuase of embed limit
+          # Limit to 10 cards because of embed limit
           |> Enum.take(10)
 
         if Enum.empty?(cards) do
@@ -194,6 +207,7 @@ defmodule Cardian.Interactions do
   rescue
     err ->
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
+      Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
       Api.edit_interaction_response!(
         interaction,
@@ -264,7 +278,17 @@ defmodule Cardian.Interactions do
               {:ok, _} ->
                 :ok
 
-              err ->
+              {:error, reason} ->
+                Sentry.capture_exception(reason,
+                  extra: %{
+                    interaction: "/art",
+                    card: card,
+                    card_result: Map.from_struct(c),
+                    image_url: image_url,
+                    built_message: msg
+                  }
+                )
+
                 Logger.error("""
                 Card name/id:
                 #{card}
@@ -276,7 +300,10 @@ defmodule Cardian.Interactions do
                 #{inspect(msg, pretty: true)}
                 """)
 
-                raise(inspect(err))
+                Api.edit_interaction_response!(
+                  interaction,
+                  Builder.build_user_message("Something went wrong... :pensive:")
+                )
             end
 
           _ ->
@@ -297,6 +324,7 @@ defmodule Cardian.Interactions do
   rescue
     err ->
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
+      Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
       Api.edit_interaction_response!(
         interaction,

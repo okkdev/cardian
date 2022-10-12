@@ -10,6 +10,13 @@ config :cardian,
   update_interval: String.to_integer(System.get_env("CARDIAN_UPDATE_INTERVAL", "120")),
   bonk_url: System.get_env("BONK_URL", "http://localhost:3000/order/list?auth=test-token")
 
+config :sentry,
+  dsn: System.fetch_env!("SENTRY_URL"),
+  enable_source_code_context: true,
+  root_source_code_path: File.cwd!(),
+  included_environments: [:prod],
+  environment_name: Mix.env()
+
 if config_env() == :prod do
   config :logger,
     level: :info
