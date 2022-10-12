@@ -10,12 +10,13 @@ job "cardian" {
       driver = "docker"
 
       config {
-        image = "okkdev/cardian"
+        image = "ghcr.io/okkdev/cardian"
       }
 
       env {
         CARDIAN_TOKEN = "discord_bot_token"
         BONK_URL = "url"
+        SENTRY_URL = "url"
       }
 
       resources {
