@@ -95,14 +95,18 @@ defmodule Cardian.Interactions do
             :ok
 
           {:error, reason} ->
-            Sentry.capture_exception(reason,
-              extra: %{
-                interaction: "/card",
-                card: card,
-                card_result: Map.from_struct(c),
-                built_message: msg
-              }
-            )
+            extra = %{
+              interaction: "/card",
+              card: card,
+              card_result: Map.from_struct(c),
+              built_message: msg
+            }
+
+            if is_exception(reason) do
+              Sentry.capture_exception(reason, extra: extra)
+            else
+              Sentry.capture_message(inspect(reason), extra: extra)
+            end
 
             Logger.error("""
             Card name/id:
@@ -279,15 +283,19 @@ defmodule Cardian.Interactions do
                 :ok
 
               {:error, reason} ->
-                Sentry.capture_exception(reason,
-                  extra: %{
-                    interaction: "/art",
-                    card: card,
-                    card_result: Map.from_struct(c),
-                    image_url: image_url,
-                    built_message: msg
-                  }
-                )
+                extra = %{
+                  interaction: "/art",
+                  card: card,
+                  card_result: Map.from_struct(c),
+                  image_url: image_url,
+                  built_message: msg
+                }
+
+                if is_exception(reason) do
+                  Sentry.capture_exception(reason, extra: extra)
+                else
+                  Sentry.capture_message(inspect(reason), extra: extra)
+                end
 
                 Logger.error("""
                 Card name/id:
