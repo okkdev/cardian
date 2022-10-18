@@ -1,4 +1,4 @@
-defmodule Cardian.Api.Ygopro do
+defmodule Cardian.Api.Ygoprodeck do
   @url "https://db.ygoprodeck.com/api/v7/cardinfo.php"
 
   def get_all_cards do
