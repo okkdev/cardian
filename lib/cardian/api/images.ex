@@ -114,7 +114,7 @@ defmodule Cardian.Api.Images do
       end
       |> Jason.encode!()
 
-    "https://imaginary.lain.dev/pipeline?url=https://storage.googleapis.com/ygoprodeck.com/pics/#{card_id}.jpg&operations=#{pipeline}"
+    "https://imaginary.lain.dev/pipeline?url=https://images.ygoprodeck.com/images/cards/#{card_id}.jpg&operations=#{pipeline}"
     |> URI.encode()
   end
 end
