@@ -17,7 +17,7 @@ RUN mix deps.get
 RUN mix deps.compile
 RUN mix release
 
-FROM alpine AS runner
+FROM alpine:3.16 AS runner
 
 RUN apk update && \
   apk add --no-cache bash libstdc++ openssl ncurses-libs
