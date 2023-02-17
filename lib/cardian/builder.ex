@@ -224,7 +224,7 @@ defmodule Cardian.Builder do
         &1.name
       end
     )
-    |> Enum.join("\n")
+    |> Enum.join(", ")
   end
 
   defp build_sets(_), do: "Unobtainable"
