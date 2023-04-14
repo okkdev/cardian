@@ -48,12 +48,12 @@ defmodule Cardian.Api.Images do
   end
 
   defp remote_art_url(card_id) when is_binary(card_id) do
-    "https://storage.googleapis.com/ygoprodeck.com/pics_artgame/#{card_id}.jpg"
+    "https://images.ygoprodeck.com/images/cards_cropped/#{card_id}.jpg"
     |> URI.encode()
   end
 
   defp remote_image_url(card_id) when is_binary(card_id) do
-    "https://storage.googleapis.com/ygoprodeck.com/pics/#{card_id}.jpg"
+    "https://images.ygoprodeck.com/images/cards/#{card_id}.jpg"
     |> URI.encode()
   end
 
@@ -114,7 +114,7 @@ defmodule Cardian.Api.Images do
       end
       |> Jason.encode!()
 
-    "https://imaginary.lain.dev/pipeline?url=https://storage.googleapis.com/ygoprodeck.com/pics/#{card_id}.jpg&operations=#{pipeline}"
+    "https://imaginary.lain.dev/pipeline?url=https://images.ygoprodeck.com/images/cards/#{card_id}.jpg&operations=#{pipeline}"
     |> URI.encode()
   end
 end

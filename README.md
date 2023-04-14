@@ -8,17 +8,12 @@ Fetches data from the [Master Duel Meta](https://masterduelmeta.com/) API
 
 ## Features
 
-### Autocompletion
+![demo](screenshots/demo.gif)
 
-Card suggestions with fuzzy searching
-
-![autocompletion](screenshots/autocomplete.png)
-
-### Card info
-
-![card info](screenshots/embed.png)
-
-### Card art
+- Autocompletion
+  - Card suggestions with fuzzy searching
+- Card info
+- Card art
 
 ## Docker container
 
