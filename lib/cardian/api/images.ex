@@ -33,8 +33,8 @@ defmodule Cardian.Api.Images do
     |> then(&Req.request(method: :head, url: &1))
     |> then(fn res ->
       case res do
-        {:ok, %{status: status}} ->
-          status == 200
+        {:ok, %{status: 200}} ->
+          true
 
         _ ->
           false

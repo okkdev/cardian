@@ -23,7 +23,7 @@ defmodule Cardian.MixProject do
   defp deps do
     [
       {:nostrum, "~> 0.8.0"},
-      {:req, "~> 0.3.0"},
+      {:req, "0.3.0"},
       {:nimble_parsec, "~> 1.2"},
       {:sentry, "~> 8.0"},
       {:hackney, "~> 1.18"}
