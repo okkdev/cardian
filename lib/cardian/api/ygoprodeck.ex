@@ -1,4 +1,6 @@
 defmodule Cardian.Api.Ygoprodeck do
+  alias Cardian.Struct.Card
+
   @url "https://db.ygoprodeck.com/api/v7/cardinfo.php"
 
   def get_all_cards do
@@ -6,7 +8,8 @@ defmodule Cardian.Api.Ygoprodeck do
     |> Req.request()
     |> handle_response()
     |> Task.async_stream(&cast_card/1)
-    |> Enum.map(fn {:ok, card} -> card end)
+    |> Stream.map(fn {:ok, card} -> card end)
+    |> Enum.to_list()
   end
 
   defp cast_card(resp) do

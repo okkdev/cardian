@@ -4,22 +4,22 @@ defmodule Cardian.CardRegistry do
   alias Cardian.Api.Masterduelmeta
 
   @alternate_search_names [
-    %Cardian.Model.Card{
+    %Cardian.Struct.Card{
       id: "88581108",
       name: "Very Fun Dragon"
     },
-    %Cardian.Model.Card{
+    %Cardian.Struct.Card{
       id: "88581108",
       name: "VFD"
     },
-    %Cardian.Model.Card{
+    %Cardian.Struct.Card{
       id: "50588353",
       name: "Needlefiber"
     }
   ]
 
   @extra_cards [
-    %Cardian.Model.Card{
+    %Cardian.Struct.Card{
       id: "skill-issue",
       url: "https://www.wikihow.com/Play-Yu-Gi-Oh!",
       # Thanks @Raseruuu#9701 for the art
@@ -35,19 +35,19 @@ defmodule Cardian.CardRegistry do
 
   # unfortunately hardcoded sets for masterduelmeta that don't get returned by the set endpoint
   @extra_sets [
-    %Cardian.Model.Set{
+    %Cardian.Struct.Set{
       id: "61fc6622c491eb1813d4c85c",
       name: "Duel Result"
     },
-    %Cardian.Model.Set{
+    %Cardian.Struct.Set{
       id: "61ef0297c65dc7a88d9faa7d",
       name: "Solo Mode Reward"
     },
-    %Cardian.Model.Set{
+    %Cardian.Struct.Set{
       id: "633697ab1232ee9557eff405",
       name: "Craftable Banned Cards"
     },
-    %Cardian.Model.Set{
+    %Cardian.Struct.Set{
       id: "misplay",
       name: "Not reading",
       url: "https://www.yugioh-card.com/en/rulebook/index.html"

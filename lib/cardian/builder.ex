@@ -1,7 +1,7 @@
 defmodule Cardian.Builder do
   import Nostrum.Struct.Embed
   alias Nostrum.Struct.Embed
-  alias Cardian.Model.Card
+  alias Cardian.Struct.Card
   alias Cardian.CardRegistry
   alias Cardian.Api.Images
 

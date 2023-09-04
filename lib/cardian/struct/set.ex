@@ -1,4 +1,4 @@
-defmodule Cardian.Model.Set do
+defmodule Cardian.Struct.Set do
   defstruct [
     :id,
     :type,
