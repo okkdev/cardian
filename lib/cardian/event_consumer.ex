@@ -4,10 +4,6 @@ defmodule Cardian.EventConsumer do
   alias Cardian.Interactions
   alias Nostrum.Api
 
-  def start_link do
-    Consumer.start_link(__MODULE__)
-  end
-
   def handle_event({:READY, _data, _ws_state}) do
     Api.update_status(:online, "/card commands", 2)
   end

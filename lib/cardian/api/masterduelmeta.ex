@@ -126,7 +126,7 @@ defmodule Cardian.Api.Masterduelmeta do
     {pendulum_effect, description} = parse_effects(resp["description"])
 
     %Card{
-      id: resp["konamiID"],
+      id: to_string(resp["konamiID"]),
       type: get_card_type(resp["type"]),
       race: resp["race"],
       monster_type: get_monster_type(resp["monsterType"]),

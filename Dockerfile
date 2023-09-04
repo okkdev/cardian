@@ -1,4 +1,4 @@
-FROM elixir:1.14-alpine AS builder
+FROM elixir:1.14-otp-25-alpine AS builder
 
 ENV MIX_ENV=prod
 
@@ -17,7 +17,7 @@ RUN mix deps.get
 RUN mix deps.compile
 RUN mix release
 
-FROM alpine:3.16 AS runner
+FROM alpine:3.18 AS runner
 
 RUN apk update && \
   apk add --no-cache bash libstdc++ openssl ncurses-libs
