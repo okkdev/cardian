@@ -1,6 +1,7 @@
 defmodule Cardian.CardRegistry do
   use GenServer
   require Logger
+  alias Cardian.Api.Ygoprodeck
   alias Cardian.Api.Masterduelmeta
 
   @alternate_search_names [
@@ -26,10 +27,10 @@ defmodule Cardian.CardRegistry do
       image_url: "https://s3.lain.dev/ygo/skill-issue.webp",
       name: "Skill Issue",
       type: :spell,
-      status: :limited,
+      status_md: :limited,
       race: "Equip",
       description: "The equipped player has issues with their skill.",
-      sets: ["misplay"]
+      sets_md: ["misplay"]
     }
   ]
 
@@ -155,7 +156,11 @@ defmodule Cardian.CardRegistry do
   end
 
   defp update_cards() do
-    cards = @extra_cards ++ Masterduelmeta.get_all_cards()
+    ygopro_cards = Ygoprodeck.get_all_cards()
+    md_cards_raw = Masterduelmeta.get_all_cards_raw()
+    updated_cards = Masterduelmeta.update_all_md_details(ygopro_cards, md_cards_raw)
+
+    cards = @extra_cards ++ updated_cards
 
     true = :ets.insert(:cards, Enum.map(cards, &{&1.id, &1}))
     Logger.info("Cards updated")

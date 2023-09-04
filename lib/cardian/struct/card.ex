@@ -14,11 +14,14 @@ defmodule Cardian.Struct.Card do
     :def,
     :scale,
     :arrows,
-    :status,
-    :rarity,
+    :status_md,
+    :status_tcg,
+    :status_ocg,
+    :status_goat,
+    :rarity_md,
     :image_url,
     :url,
-    :sets,
+    :sets_md,
     :ocg
   ]
 end

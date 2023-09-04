@@ -60,7 +60,7 @@ defmodule Cardian.Builder do
     |> try_put_field("Scale", card.scale, true)
     |> try_put_field("Arrows", card.arrows, true)
     |> put_monster_atk(card)
-    |> try_put_field("Obtainable from", build_sets(card.sets))
+    |> try_put_field("Obtainable from", build_sets(card.sets_md))
   end
 
   def build_art_message(%Card{} = card, image_url) when is_binary(image_url) do
@@ -156,9 +156,9 @@ defmodule Cardian.Builder do
       embed,
       Enum.join(
         [
-          "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity)}",
+          "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity_md)}",
           "**#{level}**: #{card.level} **Type**: #{Enum.join([card.race | card.monster_types], "/")}",
-          "**Status**: #{put_card_status(card.status)}"
+          "**Status**: #{put_card_status(card.status_md)}"
         ],
         "\n"
       )

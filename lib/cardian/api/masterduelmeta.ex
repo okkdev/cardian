@@ -1,5 +1,5 @@
 defmodule Cardian.Api.Masterduelmeta do
-  alias Cardian.Model.{Card, Set}
+  alias Cardian.Struct.{Card, Set}
 
   @url "https://www.masterduelmeta.com/api/v1"
 
@@ -16,18 +16,7 @@ defmodule Cardian.Api.Masterduelmeta do
     "Forbidden" => :forbidden
   }
 
-  @arrow_mapping %{
-    "Top-Left" => "↖️",
-    "Top" => "⬆️",
-    "Top-Right" => "↗️",
-    "Left" => "⬅️",
-    "Right" => "➡️",
-    "Bottom-Left" => "↙️",
-    "Bottom" => "⬇️",
-    "Bottom-Right" => "↘️"
-  }
-
-  def get_all_cards() do
+  def get_all_cards_raw() do
     pages = ceil(get_card_amount() / 3000)
 
     1..pages
@@ -41,9 +30,14 @@ defmodule Cardian.Api.Masterduelmeta do
     end)
     |> Stream.flat_map(fn {:ok, res} -> res end)
     |> Stream.filter(&(&1["alternateArt"] != true))
-    |> Task.async_stream(&cast_card/1)
+    |> Stream.filter(&(&1["konamiID"] != nil))
+    |> Enum.to_list()
+  end
+
+  def update_all_md_details(cards, raw_md_cards) do
+    cards
+    |> Task.async_stream(&cast_md_details(&1, raw_md_cards), ordered: false)
     |> Stream.map(fn {:ok, card} -> card end)
-    |> Stream.filter(&(&1.id != nil))
     |> Enum.to_list()
   end
 
@@ -93,18 +87,6 @@ defmodule Cardian.Api.Masterduelmeta do
     end
   end
 
-  defp get_image(card_id) when is_binary(card_id) do
-    "https://imgserv.duellinksmeta.com/v2/mdm/card/#{card_id}?portrait=true"
-    |> URI.encode()
-  end
-
-  defp get_image(_), do: nil
-
-  defp get_card_link(card_name) when is_binary(card_name) do
-    ("https://www.masterduelmeta.com/cards/" <> card_name)
-    |> URI.encode()
-  end
-
   defp get_set_link(url_path) when is_binary(url_path) do
     ("https://www.masterduelmeta.com/articles" <> url_path)
     |> URI.encode()
@@ -122,30 +104,19 @@ defmodule Cardian.Api.Masterduelmeta do
     end
   end
 
-  defp cast_card(resp) do
-    {pendulum_effect, description} = parse_effects(resp["description"])
+  defp cast_md_details(card, md_cards) do
+    case Enum.find(md_cards, &(&1["konamiID"] == card.id)) do
+      nil ->
+        card
 
-    %Card{
-      id: to_string(resp["konamiID"]),
-      type: get_card_type(resp["type"]),
-      race: resp["race"],
-      monster_type: get_monster_type(resp["monsterType"]),
-      monster_types: resp["monsterType"],
-      attribute: resp["attribute"],
-      level: resp["level"] || resp["linkRating"],
-      name: resp["name"],
-      description: description,
-      pendulum_effect: pendulum_effect,
-      atk: resp["atk"],
-      def: resp["def"],
-      scale: resp["scale"],
-      arrows: parse_link_arrows(resp["linkArrows"]),
-      status: @status_mapping[resp["banStatus"]] || "Unlimited",
-      rarity: @rarity_mapping[resp["rarity"]],
-      image_url: get_image(resp["_id"]),
-      url: get_card_link(resp["name"]),
-      sets: Enum.map(resp["obtain"], & &1["source"]["_id"])
-    }
+      md_card ->
+        %Card{
+          card
+          | status_md: @status_mapping[md_card["banStatus"]] || "Unlimited",
+            rarity_md: @rarity_mapping[md_card["rarity"]],
+            sets_md: Enum.map(md_card["obtain"], & &1["source"]["_id"])
+        }
+    end
   end
 
   defp cast_set(resp) do
@@ -157,52 +128,4 @@ defmodule Cardian.Api.Masterduelmeta do
       image_url: "https://s3.duellinksmeta.com" <> resp["bannerImage"]
     }
   end
-
-  defp parse_effects("[ Pendulum Effect ]" <> description) do
-    [pendulum_effect, rest] = String.split(description, ["---", "[ "], parts: 2)
-    [_, description] = String.split(rest, "]", parts: 2)
-
-    {
-      String.trim(pendulum_effect),
-      String.trim(description)
-    }
-  end
-
-  defp parse_effects(description), do: {nil, description}
-
-  defp parse_link_arrows(arrows) when is_list(arrows) and length(arrows) > 0 do
-    arrows
-    |> Enum.map_join(&@arrow_mapping[&1])
-    # Add invisible character to force mobile to show small emojis
-    |> then(&(&1 <> "‎"))
-  end
-
-  defp parse_link_arrows(_), do: nil
-
-  defp get_card_type(type) do
-    case String.downcase(type) do
-      "monster" -> :monster
-      "spell" -> :spell
-      "trap" -> :trap
-      _ -> nil
-    end
-  end
-
-  defp get_monster_type([type | types]) do
-    case String.downcase(type) do
-      "synchro" -> :synchro
-      "effect" -> :effect
-      "normal" -> :normal
-      "xyz" -> :xyz
-      "fusion" -> :fusion
-      "ritual" -> :ritual
-      "link" -> :link
-      # Skip Pendulum and Flip monsters as this is used for color and level name
-      "pendulum" -> get_monster_type(types)
-      "flip" -> get_monster_type(types)
-      _ -> nil
-    end
-  end
-
-  defp get_monster_type(_), do: nil
 end
