@@ -1,10 +1,10 @@
 # 🎴 Cardian
 
-Yu-Gi-Oh! Master Duel Discord Bot
+Yu-Gi-Oh! Paper and Master Duel Discord Bot
 
-Fetches data from the [Master Duel Meta](https://masterduelmeta.com/) API
+Fetches data from the [YGOPRODeck](https://ygoprodeck.com/) and [Master Duel Meta](https://masterduelmeta.com/) APIs
 
-### [-> Invite Bot <-](https://discord.com/api/oauth2/authorize?client_id=944183782745997362&permissions=274878221376&scope=applications.commands%20bot)
+The bot is available in the new Discord app directory!
 
 ## Features
 
@@ -13,7 +13,8 @@ Fetches data from the [Master Duel Meta](https://masterduelmeta.com/) API
 - Autocompletion
   - Card suggestions with fuzzy searching
 - Card info
-- Card art
+- High quality art
+- Add card info to messages with `<card name>`s via right click
 
 ## Docker container
 
@@ -45,6 +46,12 @@ docker exec cardian /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()
 - `CARDIAN_UPDATE_INTERVAL`: Card cache update interval in minutes. Default: 120
 
 ## Changelog
+
+### 7.0
+Added paper as the new default and changed the bot into a general purpose YuGiOh bot instead of just Masterduel.
+
+### 6.0
+Added the ability to parse `<card name>` from messages with a right click menu option.
 
 ### 5.0
 
