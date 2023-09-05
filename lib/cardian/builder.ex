@@ -43,24 +43,28 @@ defmodule Cardian.Builder do
     "Counter" => "<:counter:948992874400321617>"
   }
 
-  def build_card_embed(%Card{} = card) do
+  @hat_token "https://s3.lain.dev/ygo/hat-token.webp"
+
+  @set_base_url "https://yugipedia.com/wiki/"
+
+  def build_card_embed(%Card{} = card, format \\ :paper) do
     %Embed{}
     |> put_title(card.name)
     |> put_url(card.url)
     |> put_thumbnail(
       case Images.get_image_url(card) do
         {:ok, url} -> url
-        _ -> card.image_url
+        _ -> card.image_url || @hat_token
       end
     )
     |> try_put_color(get_card_color(card))
-    |> put_card_metadata(card)
+    |> put_card_metadata(card, format)
     |> try_put_field("Pendulum Effect", card.pendulum_effect)
     |> put_card_description(card)
     |> try_put_field("Scale", card.scale, true)
     |> try_put_field("Arrows", card.arrows, true)
     |> put_monster_atk(card)
-    |> try_put_field("Obtainable from", build_sets(card.sets_md))
+    |> try_put_field("Released in", build_sets(card, format))
   end
 
   def build_art_message(%Card{} = card, image_url) when is_binary(image_url) do
@@ -144,7 +148,7 @@ defmodule Cardian.Builder do
 
   defp try_put_field(embed, _title, _content, _inline), do: embed
 
-  defp put_card_metadata(embed, %Card{type: :monster} = card) do
+  defp put_card_metadata(embed, %Card{type: :monster} = card, format) do
     level =
       case card.monster_type do
         :xyz -> "Rank"
@@ -152,26 +156,44 @@ defmodule Cardian.Builder do
         _ -> "Level"
       end
 
+    attribute =
+      case format do
+        :paper ->
+          "**Attribute**: #{@attribute_icons[card.attribute]}"
+
+        :md ->
+          "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity_md)}"
+      end
+
     put_description(
       embed,
       Enum.join(
         [
-          "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity_md)}",
+          attribute,
           "**#{level}**: #{card.level} **Type**: #{Enum.join([card.race | card.monster_types], "/")}",
-          "**Status**: #{put_card_status(card.status_md)}"
+          put_card_status(card, format)
         ],
         "\n"
       )
     )
   end
 
-  defp put_card_metadata(embed, card) do
+  defp put_card_metadata(embed, card, format) do
+    type =
+      case format do
+        :paper ->
+          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]}"
+
+        :md ->
+          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]} #{put_card_rarity(card.rarity_md)}"
+      end
+
     put_description(
       embed,
       Enum.join(
         [
-          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]} #{put_card_rarity(card.rarity)}",
-          "**Status**: #{put_card_status(card.status)}"
+          type,
+          put_card_status(card, format)
         ],
         "\n"
       )
@@ -184,11 +206,19 @@ defmodule Cardian.Builder do
 
   defp put_card_rarity(_), do: ""
 
-  defp put_card_status(status) when is_map_key(@status_icons, status) do
+  defp put_card_status(%Card{} = card, :paper) do
+    "**TCG Status**: #{status_icon(card.status_tcg)} **OCG Status**: #{status_icon(card.status_ocg)}"
+  end
+
+  defp put_card_status(%Card{} = card, :md) do
+    "**Status**: #{status_icon(card.status_md)}"
+  end
+
+  defp status_icon(status) when is_map_key(@status_icons, status) do
     @status_icons[status]
   end
 
-  defp put_card_status(_), do: "Unlimited"
+  defp status_icon(_), do: "Unlimited"
 
   defp put_card_description(embed, %Card{type: :monster} = card) do
     if Enum.member?(card.monster_types, "Normal") do
@@ -214,8 +244,15 @@ defmodule Cardian.Builder do
 
   defp put_monster_atk(embed, _card), do: embed
 
-  defp build_sets(sets) when is_list(sets) and length(sets) > 0 do
-    sets
+  defp build_sets(%Card{} = card, :paper)
+       when is_list(card.sets_paper) and length(card.sets_paper) > 0 do
+    card.sets_paper
+    |> Enum.map(&"[#{&1}](#{@set_base_url}#{&1})")
+    |> Enum.join(", ")
+  end
+
+  defp build_sets(%Card{} = card, :md) when is_list(card.sets_md) and length(card.sets_md) > 0 do
+    card.sets_md
     |> Enum.flat_map(&CardRegistry.get_set_by_id(&1))
     |> Enum.map(
       &if &1.url do
@@ -227,7 +264,7 @@ defmodule Cardian.Builder do
     |> Enum.join(", ")
   end
 
-  defp build_sets(_), do: "Unobtainable"
+  defp build_sets(_, _), do: "Unreleased"
 
   defp try_put_color(embed, color) when is_integer(color) do
     put_color(embed, color)

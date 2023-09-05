@@ -19,7 +19,7 @@ defmodule Cardian.Api.Ygoprodeck do
 
   defp cast_card(resp) do
     {pendulum_effect, description} = parse_effects(resp["desc"])
-    types = resp["type"] |> String.trim_trailing("Monster") |> String.split(" ")
+    types = resp["type"] |> String.trim_trailing("Monster") |> String.split(" ", trim: true)
 
     %Card{
       id: to_string(resp["id"]),
@@ -35,11 +35,12 @@ defmodule Cardian.Api.Ygoprodeck do
       atk: resp["atk"],
       def: resp["def"],
       scale: resp["scale"],
-      arrows: parse_link_arrows(resp["linkArrows"]),
-      status_tcg: @status_mapping[resp["banlist_info"]["ban_tcg"]] || "Unlimited",
-      status_ocg: @status_mapping[resp["banlist_info"]["ban_ocg"]] || "Unlimited",
-      status_goat: @status_mapping[resp["banlist_info"]["ban_goat"]] || "Unlimited",
-      url: get_card_link(resp["id"])
+      arrows: parse_link_arrows(resp["linkmarkers"]),
+      status_tcg: @status_mapping[resp["banlist_info"]["ban_tcg"]],
+      status_ocg: @status_mapping[resp["banlist_info"]["ban_ocg"]],
+      status_goat: @status_mapping[resp["banlist_info"]["ban_goat"]],
+      url: get_card_link(resp["id"]),
+      sets_paper: get_sets(resp["card_sets"])
     }
   end
 
@@ -101,6 +102,12 @@ defmodule Cardian.Api.Ygoprodeck do
       _ -> nil
     end
   end
+
+  defp get_sets(sets) when is_list(sets) do
+    Enum.map(sets, &(&1["set_code"] |> String.split("-") |> Enum.at(0, &1["set_code"])))
+  end
+
+  defp get_sets(_), do: nil
 
   defp get_card_link(card_id) do
     "https://yugipedia.com/wiki/#{card_id}"

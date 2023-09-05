@@ -28,6 +28,21 @@ defmodule Cardian.Interactions do
           description: "Search a card by name",
           autocomplete: true,
           required: true
+        },
+        %{
+          type: 3,
+          name: "format",
+          description: "Which format of the card game (default: Paper)",
+          choices: [
+            %{
+              name: "Paper",
+              value: "paper"
+            },
+            %{
+              name: "Masterduel",
+              value: "md"
+            }
+          ]
         }
       ]
     }
@@ -78,15 +93,26 @@ defmodule Cardian.Interactions do
 
   # Handle card command
   def handle(
-        %Interaction{data: %{name: "card", options: [%{name: "name", value: card}]}} = interaction
+        %Interaction{
+          data: %{
+            name: "card",
+            options: [%{name: "name", value: card}] = options
+          }
+        } = interaction
       ) do
     Api.create_interaction_response!(interaction, %{type: 5})
 
     case CardRegistry.get_card(card) do
       [c | _] ->
+        format =
+          case Enum.find(options, &(&1.name == "format")) do
+            %{name: "format", value: "md"} -> :md
+            _ -> :paper
+          end
+
         msg = %{
           embeds: [
-            Builder.build_card_embed(c)
+            Builder.build_card_embed(c, format)
           ]
         }
 

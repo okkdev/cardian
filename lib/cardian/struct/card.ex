@@ -21,6 +21,7 @@ defmodule Cardian.Struct.Card do
     :rarity_md,
     :image_url,
     :url,
+    :sets_paper,
     :sets_md,
     :ocg
   ]
