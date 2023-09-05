@@ -39,7 +39,7 @@ defmodule Cardian.Interactions do
               value: "paper"
             },
             %{
-              name: "Masterduel",
+              name: "Master Duel",
               value: "md"
             }
           ]
