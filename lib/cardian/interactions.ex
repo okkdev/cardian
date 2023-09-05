@@ -96,7 +96,7 @@ defmodule Cardian.Interactions do
         %Interaction{
           data: %{
             name: "card",
-            options: [%{name: "name", value: card}] = options
+            options: [%{name: "name", value: card} | _] = options
           }
         } = interaction
       ) do
