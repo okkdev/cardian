@@ -104,7 +104,9 @@ defmodule Cardian.Api.Ygoprodeck do
   end
 
   defp get_sets(sets) when is_list(sets) do
-    Enum.map(sets, &(&1["set_code"] |> String.split("-") |> Enum.at(0, &1["set_code"])))
+    sets
+    |> Enum.map(&(&1["set_code"] |> String.split("-") |> Enum.at(0, &1["set_code"])))
+    |> Enum.uniq()
   end
 
   defp get_sets(_), do: nil
