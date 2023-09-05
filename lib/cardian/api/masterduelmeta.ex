@@ -35,10 +35,9 @@ defmodule Cardian.Api.Masterduelmeta do
   end
 
   def update_all_md_details(cards, raw_md_cards) do
-    cards
-    |> Task.async_stream(&cast_md_details(&1, raw_md_cards), ordered: false)
-    |> Stream.map(fn {:ok, card} -> card end)
-    |> Enum.to_list()
+    md_cards_by_id = raw_md_cards |> Enum.map(&{&1["konamiID"], &1}) |> Enum.into(%{})
+
+    Enum.map(cards, &cast_md_details(&1, md_cards_by_id))
   end
 
   def get_card_amount() do
@@ -105,17 +104,17 @@ defmodule Cardian.Api.Masterduelmeta do
   end
 
   defp cast_md_details(card, md_cards) do
-    case Enum.find(md_cards, &(&1["konamiID"] == card.id)) do
-      nil ->
-        card
-
-      md_card ->
+    case Map.fetch(md_cards, card.id) do
+      {:ok, md_card} ->
         %Card{
           card
           | status_md: @status_mapping[md_card["banStatus"]] || "Unlimited",
             rarity_md: @rarity_mapping[md_card["rarity"]],
             sets_md: Enum.map(md_card["obtain"], & &1["source"]["_id"])
         }
+
+      :error ->
+        card
     end
   end
 
