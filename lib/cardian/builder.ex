@@ -263,7 +263,7 @@ defmodule Cardian.Builder do
        when is_list(card.sets_paper) and length(card.sets_paper) > 0 do
     card.sets_paper
     |> Enum.map(&"[#{&1}](#{@set_base_url}#{&1})")
-    |> Enum.join(", ")
+    |> truncate_sets()
   end
 
   defp build_sets(%Card{} = card, :md) when is_list(card.sets_md) and length(card.sets_md) > 0 do
@@ -276,7 +276,7 @@ defmodule Cardian.Builder do
         &1.name
       end
     )
-    |> Enum.join(", ")
+    |> truncate_sets()
   end
 
   defp build_sets(%Card{} = card, :dl) when is_list(card.sets_dl) and length(card.sets_dl) > 0 do
@@ -289,10 +289,25 @@ defmodule Cardian.Builder do
         &1.name
       end
     )
-    |> Enum.join(", ")
+    |> truncate_sets()
   end
 
   defp build_sets(_, _), do: "Unreleased"
+
+  defp truncate_sets(sets) when is_list(sets) do
+    {sets, rest} = Enum.split(sets, 5)
+
+    case Enum.empty?(rest) do
+      true ->
+        sets
+        |> Enum.join(", ")
+
+      false ->
+        sets
+        |> Enum.join(", ")
+        |> then(&"#{&1} and #{length(rest)} more...")
+    end
+  end
 
   defp try_put_color(embed, color) when is_integer(color) do
     put_color(embed, color)
