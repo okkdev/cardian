@@ -13,6 +13,8 @@ The bot is available in the new Discord app directory!
 - Autocompletion
   - Card suggestions with fuzzy searching
 - Card info
+  - different formats using the `format:` option
+  - remembers the last used option as default
 - High quality art
 - Add card info to messages with `<card name>`s via right click
 

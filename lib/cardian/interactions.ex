@@ -3,6 +3,8 @@ defmodule Cardian.Interactions do
   alias Nostrum.Api
   alias Nostrum.Struct.Interaction
   alias Cardian.{Builder, CardRegistry}
+  alias Cardian.Configs.UserConfig
+  alias Cardian.UserConfigs
 
   def deploy_commands() do
     {:ok, _} = Api.bulk_overwrite_global_application_commands(get_commands())
@@ -32,7 +34,7 @@ defmodule Cardian.Interactions do
         %{
           type: 3,
           name: "format",
-          description: "Which format of the card game (default: Paper)",
+          description: "Which format of the card game (remembers your last choice)",
           choices: [
             %{
               name: "Paper",
@@ -101,7 +103,8 @@ defmodule Cardian.Interactions do
           data: %{
             name: "card",
             options: [%{name: "name", value: card} | _] = options
-          }
+          },
+          user: %{id: user_id}
         } = interaction
       ) do
     Api.create_interaction_response!(interaction, %{type: 5})
@@ -110,9 +113,26 @@ defmodule Cardian.Interactions do
       [c | _] ->
         format =
           case Enum.find(options, &(&1.name == "format")) do
-            %{name: "format", value: "md"} -> :md
-            %{name: "format", value: "dl"} -> :dl
-            _ -> :paper
+            %{name: "format", value: "paper"} ->
+              UserConfigs.create_or_update_config(%{discord_id: user_id, format: :paper})
+
+              :paper
+
+            %{name: "format", value: "md"} ->
+              UserConfigs.create_or_update_config(%{discord_id: user_id, format: :md})
+
+              :md
+
+            %{name: "format", value: "dl"} ->
+              UserConfigs.create_or_update_config(%{discord_id: user_id, format: :dl})
+
+              :dl
+
+            _ ->
+              case UserConfigs.get_config_by_discord_id(user_id) do
+                %UserConfig{format: f} -> f
+                _ -> :paper
+              end
           end
 
         msg = %{

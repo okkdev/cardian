@@ -8,8 +8,10 @@ defmodule Cardian.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      {Ecto.Migrator, repos: Application.fetch_env!(:cardian, :ecto_repos)},
       Cardian.EventConsumer,
-      Cardian.CardRegistry
+      Cardian.CardRegistry,
+      Cardian.Repo
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

@@ -26,7 +26,10 @@ defmodule Cardian.MixProject do
       {:req, "0.3.0"},
       {:nimble_parsec, "~> 1.2"},
       {:sentry, "~> 8.0"},
-      {:hackney, "~> 1.18"}
+      {:hackney, "~> 1.18"},
+      {:ecto_sql, "~> 3.10"},
+      {:ecto_sqlite3, ">= 0.0.0"},
+      {:ecto_ulid, "~> 0.3.0"}
     ]
   end
 end

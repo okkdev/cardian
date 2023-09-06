@@ -28,3 +28,7 @@ cardian-*.tar
 .elixir_ls
 
 .env
+
+# Database files
+*.db
+*.db-*
