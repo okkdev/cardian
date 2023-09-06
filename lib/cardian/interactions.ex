@@ -41,6 +41,10 @@ defmodule Cardian.Interactions do
             %{
               name: "Master Duel",
               value: "md"
+            },
+            %{
+              name: "Duel Links",
+              value: "dl"
             }
           ]
         }
@@ -107,6 +111,7 @@ defmodule Cardian.Interactions do
         format =
           case Enum.find(options, &(&1.name == "format")) do
             %{name: "format", value: "md"} -> :md
+            %{name: "format", value: "dl"} -> :dl
             _ -> :paper
           end
 

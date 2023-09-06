@@ -1,6 +1,7 @@
 defmodule Cardian.CardRegistry do
   use GenServer
   require Logger
+  alias Cardian.Api.Duellinksmeta
   alias Cardian.Api.Ygoprodeck
   alias Cardian.Api.Masterduelmeta
 
@@ -148,7 +149,7 @@ defmodule Cardian.CardRegistry do
   end
 
   defp update_sets() do
-    sets = @extra_sets ++ Masterduelmeta.get_all_sets()
+    sets = @extra_sets ++ Masterduelmeta.get_all_sets() ++ Duellinksmeta.get_all_sets()
 
     true = :ets.insert(:sets, Enum.map(sets, &{&1.id, &1}))
 
@@ -158,7 +159,12 @@ defmodule Cardian.CardRegistry do
   defp update_cards() do
     ygopro_cards = Ygoprodeck.get_all_cards()
     md_cards_raw = Masterduelmeta.get_all_cards_raw()
-    updated_cards = Masterduelmeta.update_all_md_details(ygopro_cards, md_cards_raw)
+    dl_cards_raw = Duellinksmeta.get_all_cards_raw()
+
+    updated_cards =
+      ygopro_cards
+      |> Masterduelmeta.update_card_details(md_cards_raw)
+      |> Duellinksmeta.update_card_details(dl_cards_raw)
 
     cards = @extra_cards ++ updated_cards
 

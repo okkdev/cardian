@@ -1,6 +1,6 @@
 # 🎴 Cardian
 
-Yu-Gi-Oh! Paper and Master Duel Discord Bot
+Yu-Gi-Oh! Paper, Master Duel and Duel Links Discord Bot
 
 Fetches data from the [YGOPRODeck](https://ygoprodeck.com/) and [Master Duel Meta](https://masterduelmeta.com/) APIs
 

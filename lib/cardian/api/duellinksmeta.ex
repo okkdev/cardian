@@ -1,7 +1,7 @@
-defmodule Cardian.Api.Masterduelmeta do
+defmodule Cardian.Api.Duellinksmeta do
   alias Cardian.Struct.{Card, Set}
 
-  @url "https://www.masterduelmeta.com/api/v1"
+  @url "https://www.duellinksmeta.com/api/v1"
 
   @rarity_mapping %{
     "N" => :normal,
@@ -34,10 +34,10 @@ defmodule Cardian.Api.Masterduelmeta do
     |> Enum.to_list()
   end
 
-  def update_card_details(cards, raw_md_cards) do
-    md_cards_by_id = raw_md_cards |> Enum.map(&{&1["konamiID"], &1}) |> Enum.into(%{})
+  def update_card_details(cards, raw_dl_cards) do
+    dl_cards_by_id = raw_dl_cards |> Enum.map(&{&1["konamiID"], &1}) |> Enum.into(%{})
 
-    Enum.map(cards, &cast_md_details(&1, md_cards_by_id))
+    Enum.map(cards, &cast_dl_details(&1, dl_cards_by_id))
   end
 
   def get_card_amount() do
@@ -87,7 +87,7 @@ defmodule Cardian.Api.Masterduelmeta do
   end
 
   defp get_set_link(url_path) when is_binary(url_path) do
-    ("https://www.masterduelmeta.com/articles" <> url_path)
+    ("https://www.duellinksmeta.com/articles" <> url_path)
     |> URI.encode()
   end
 
@@ -103,14 +103,14 @@ defmodule Cardian.Api.Masterduelmeta do
     end
   end
 
-  defp cast_md_details(card, md_cards) do
-    case Map.fetch(md_cards, card.id) do
-      {:ok, md_card} ->
+  defp cast_dl_details(card, dl_cards) do
+    case Map.fetch(dl_cards, card.id) do
+      {:ok, dl_card} ->
         %Card{
           card
-          | status_md: @status_mapping[md_card["banStatus"]],
-            rarity_md: @rarity_mapping[md_card["rarity"]],
-            sets_md: Enum.map(md_card["obtain"], & &1["source"]["_id"])
+          | status_dl: @status_mapping[dl_card["banStatus"]],
+            rarity_dl: @rarity_mapping[dl_card["rarity"]],
+            sets_dl: Enum.map(dl_card["obtain"], & &1["source"]["_id"])
         }
 
       :error ->

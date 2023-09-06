@@ -65,6 +65,7 @@ defmodule Cardian.Builder do
     |> try_put_field("Arrows", card.arrows, true)
     |> put_monster_atk(card)
     |> try_put_field("Released in", build_sets(card, format))
+    |> put_format_footer(format)
   end
 
   def build_art_message(%Card{} = card, image_url) when is_binary(image_url) do
@@ -82,6 +83,10 @@ defmodule Cardian.Builder do
       ]
     }
   end
+
+  defp put_format_footer(embed, :paper), do: put_footer(embed, "Format: Paper")
+  defp put_format_footer(embed, :md), do: put_footer(embed, "Format: Master Duel")
+  defp put_format_footer(embed, :dl), do: put_footer(embed, "Format: Duel Links")
 
   defp put_ocg_footer(embed, %Card{ocg: true}) do
     embed
@@ -163,6 +168,9 @@ defmodule Cardian.Builder do
 
         :md ->
           "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity_md)}"
+
+        :dl ->
+          "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity_dl)}"
       end
 
     put_description(
@@ -186,6 +194,9 @@ defmodule Cardian.Builder do
 
         :md ->
           "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]} #{put_card_rarity(card.rarity_md)}"
+
+        :dl ->
+          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]} #{put_card_rarity(card.rarity_dl)}"
       end
 
     put_description(
@@ -207,11 +218,15 @@ defmodule Cardian.Builder do
   defp put_card_rarity(_), do: ""
 
   defp put_card_status(%Card{} = card, :paper) do
-    "**TCG Status**: #{status_icon(card.status_tcg)} **OCG Status**: #{status_icon(card.status_ocg)}"
+    "**TCG Status**: #{status_icon(card.status_tcg)}\n**OCG Status**: #{status_icon(card.status_ocg)}"
   end
 
   defp put_card_status(%Card{} = card, :md) do
     "**Status**: #{status_icon(card.status_md)}"
+  end
+
+  defp put_card_status(%Card{} = card, :dl) do
+    "**Status**: #{status_icon(card.status_dl)}"
   end
 
   defp status_icon(status) when is_map_key(@status_icons, status) do
@@ -253,6 +268,19 @@ defmodule Cardian.Builder do
 
   defp build_sets(%Card{} = card, :md) when is_list(card.sets_md) and length(card.sets_md) > 0 do
     card.sets_md
+    |> Enum.flat_map(&CardRegistry.get_set_by_id(&1))
+    |> Enum.map(
+      &if &1.url do
+        "[#{&1.name}](#{&1.url})"
+      else
+        &1.name
+      end
+    )
+    |> Enum.join(", ")
+  end
+
+  defp build_sets(%Card{} = card, :dl) when is_list(card.sets_dl) and length(card.sets_dl) > 0 do
+    card.sets_dl
     |> Enum.flat_map(&CardRegistry.get_set_by_id(&1))
     |> Enum.map(
       &if &1.url do
