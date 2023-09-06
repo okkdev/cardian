@@ -25,7 +25,7 @@ defmodule Cardian.Api.Ygoprodeck do
       id: to_string(resp["id"]),
       type: parse_type(resp["type"]),
       race: resp["race"],
-      monster_type: parse_monster_type(types),
+      monster_type: parse_monster_type(resp["frameType"]),
       monster_types: types,
       attribute: resp["attribute"],
       level: resp["level"] || resp["linkval"],
@@ -87,8 +87,8 @@ defmodule Cardian.Api.Ygoprodeck do
 
   defp parse_effects(description), do: {nil, description}
 
-  defp parse_monster_type([type | types]) do
-    case String.downcase(type) do
+  defp parse_monster_type(type) do
+    case type |> String.downcase() |> String.trim_trailing("_pendulum") do
       "synchro" -> :synchro
       "effect" -> :effect
       "normal" -> :normal
@@ -96,9 +96,6 @@ defmodule Cardian.Api.Ygoprodeck do
       "fusion" -> :fusion
       "ritual" -> :ritual
       "link" -> :link
-      # Skip Pendulum and Flip monsters as this is used for color and level name
-      "pendulum" -> parse_monster_type(types)
-      "flip" -> parse_monster_type(types)
       _ -> nil
     end
   end
