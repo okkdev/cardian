@@ -20,7 +20,7 @@ defmodule Cardian.Interactions do
   def card_command do
     %{
       name: "card",
-      description: "Get Yu-Gi-Oh! Master Duel card info",
+      description: "Get Yu-Gi-Oh! card info",
       options: [
         %{
           type: 3,
