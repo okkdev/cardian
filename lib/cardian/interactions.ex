@@ -112,26 +112,32 @@ defmodule Cardian.Interactions do
     case CardRegistry.get_card(card) do
       [c | _] ->
         format =
-          case Enum.find(options, &(&1.name == "format")) do
-            %{name: "format", value: "paper"} ->
-              UserConfigs.create_or_update_config(%{discord_id: user_id, format: :paper})
-
-              :paper
-
-            %{name: "format", value: "md"} ->
-              UserConfigs.create_or_update_config(%{discord_id: user_id, format: :md})
-
-              :md
-
-            %{name: "format", value: "dl"} ->
-              UserConfigs.create_or_update_config(%{discord_id: user_id, format: :dl})
-
-              :dl
+          case c.type do
+            :skill ->
+              :sd
 
             _ ->
-              case UserConfigs.get_config_by_discord_id(user_id) do
-                %UserConfig{format: f} -> f
-                _ -> :paper
+              case Enum.find(options, &(&1.name == "format")) do
+                %{name: "format", value: "paper"} ->
+                  UserConfigs.create_or_update_config(%{discord_id: user_id, format: :paper})
+
+                  :paper
+
+                %{name: "format", value: "md"} ->
+                  UserConfigs.create_or_update_config(%{discord_id: user_id, format: :md})
+
+                  :md
+
+                %{name: "format", value: "dl"} ->
+                  UserConfigs.create_or_update_config(%{discord_id: user_id, format: :dl})
+
+                  :dl
+
+                _ ->
+                  case UserConfigs.get_config_by_discord_id(user_id) do
+                    %UserConfig{format: f} -> f
+                    _ -> :paper
+                  end
               end
           end
 

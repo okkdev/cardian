@@ -71,6 +71,7 @@ defmodule Cardian.Api.Ygoprodeck do
       String.contains?(type, "monster") -> :monster
       String.contains?(type, "spell") -> :spell
       String.contains?(type, "trap") -> :trap
+      String.contains?(type, "skill") -> :skill
       :otherwise -> nil
     end
   end

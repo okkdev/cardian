@@ -7,7 +7,8 @@ defmodule Cardian.Builder do
 
   @spell_trap_icons %{
     spell: "<:spell:948992874438070342>",
-    trap: "<:trap:948992874438074428>"
+    trap: "<:trap:948992874438074428>",
+    skill: "Skill"
   }
 
   @rarity_icons %{
@@ -87,6 +88,7 @@ defmodule Cardian.Builder do
   defp put_format_footer(embed, :paper), do: put_footer(embed, "Format: Paper")
   defp put_format_footer(embed, :md), do: put_footer(embed, "Format: Master Duel")
   defp put_format_footer(embed, :dl), do: put_footer(embed, "Format: Duel Links")
+  defp put_format_footer(embed, :sd), do: put_footer(embed, "Format: Speed Duel")
 
   defp put_ocg_footer(embed, %Card{ocg: true}) do
     embed
@@ -166,6 +168,9 @@ defmodule Cardian.Builder do
         :paper ->
           "**Attribute**: #{@attribute_icons[card.attribute]}"
 
+        :sd ->
+          "**Attribute**: #{@attribute_icons[card.attribute]}"
+
         :md ->
           "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity_md)}"
 
@@ -190,6 +195,9 @@ defmodule Cardian.Builder do
     type =
       case format do
         :paper ->
+          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]}"
+
+        :sd ->
           "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]}"
 
         :md ->
@@ -229,6 +237,10 @@ defmodule Cardian.Builder do
     "**Status**: #{status_icon(card.status_dl)}"
   end
 
+  defp put_card_status(%Card{} = _card, :sd) do
+    ""
+  end
+
   defp status_icon(status) when is_map_key(@status_icons, status) do
     @status_icons[status]
   end
@@ -259,8 +271,9 @@ defmodule Cardian.Builder do
 
   defp put_monster_atk(embed, _card), do: embed
 
-  defp build_sets(%Card{} = card, :paper)
-       when is_list(card.sets_paper) and length(card.sets_paper) > 0 do
+  defp build_sets(%Card{} = card, format)
+       when format in [:paper, :sd] and
+              is_list(card.sets_paper) and length(card.sets_paper) > 0 do
     card.sets_paper
     |> Enum.map(&"[#{&1}](#{@set_base_url}#{&1})")
     |> truncate_sets()
@@ -318,6 +331,8 @@ defmodule Cardian.Builder do
   defp get_card_color(%Card{type: :spell}), do: 1_941_108
 
   defp get_card_color(%Card{type: :trap}), do: 12_343_940
+
+  defp get_card_color(%Card{type: :skill}), do: 26_316
 
   defp get_card_color(%Card{type: :monster, monster_type: type}) do
     case type do
