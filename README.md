@@ -4,11 +4,12 @@ Yu-Gi-Oh! Paper, Master Duel and Duel Links Discord Bot
 
 Fetches data from the [YGOPRODeck](https://ygoprodeck.com/) and [Master Duel Meta](https://masterduelmeta.com/) APIs
 
-The bot is available in the new Discord app directory!
+Get the bot from the new Discord app directory!
+
 
 ## Features
 
-![demo](screenshots/demo.gif)
+![demo](readme_assets/demo.gif)
 
 - Autocompletion
   - Card suggestions with fuzzy searching
