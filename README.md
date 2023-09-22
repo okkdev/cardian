@@ -6,6 +6,7 @@ Fetches data from the [YGOPRODeck](https://ygoprodeck.com/) and [Master Duel Met
 
 Get the bot from the new Discord app directory!
 
+[![Discord App Directory](readme_assets/appdirectory.svg)](https://discord.com/application-directory/944183782745997362)
 
 ## Features
 
