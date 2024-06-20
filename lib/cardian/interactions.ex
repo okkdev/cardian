@@ -8,6 +8,7 @@ defmodule Cardian.Interactions do
 
   def deploy_commands() do
     {:ok, _} = Api.bulk_overwrite_global_application_commands(get_commands())
+
     IO.puts("Commands deployed! (It might take up to an hour to register...)")
   end
 
@@ -23,6 +24,8 @@ defmodule Cardian.Interactions do
     %{
       name: "card",
       description: "Get Yu-Gi-Oh! card info",
+      integration_types: [0, 1],
+      contexts: [0, 1, 2],
       options: [
         %{
           type: 3,
@@ -57,7 +60,9 @@ defmodule Cardian.Interactions do
   def parse_card_command do
     %{
       type: 3,
-      name: "Embed cards"
+      name: "Embed cards",
+      integration_types: [0, 1],
+      contexts: [0, 1, 2]
     }
   end
 
@@ -65,6 +70,8 @@ defmodule Cardian.Interactions do
     %{
       name: "art",
       description: "Get Yu-Gi-Oh! card art",
+      integration_types: [0, 1],
+      contexts: [0, 1, 2],
       options: [
         %{
           type: 3,
