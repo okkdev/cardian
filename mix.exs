@@ -22,12 +22,11 @@ defmodule Cardian.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:nostrum,
-       git: "https://github.com/Kraigie/nostrum", ref: "1ec397fda41d4dd345aaeba471b88c8ccded920f"},
-      {:req, "0.3.0"},
+      {:nostrum, "~> 0.9.1"},
+      {:req, "~> 0.5.0"},
       {:nimble_parsec, "~> 1.2"},
-      {:sentry, "~> 8.0"},
-      {:hackney, "~> 1.18"},
+      {:sentry, "~> 10.0"},
+      {:finch, "~> 0.18"},
       {:ecto_sql, "~> 3.10"},
       {:ecto_sqlite3, ">= 0.0.0"},
       {:ecto_ulid, "~> 0.3.0"}

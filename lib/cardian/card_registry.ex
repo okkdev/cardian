@@ -200,7 +200,7 @@ defmodule Cardian.CardRegistry do
         :timer.seconds(5)
       end
 
-    Logger.info("Scheduling update in #{time}")
+    Logger.info("Scheduling update in #{time}ms")
 
     Process.send_after(
       :card_registry,

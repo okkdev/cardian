@@ -17,13 +17,16 @@ config :cardian, Cardian.Repo,
 config :sentry,
   dsn: System.fetch_env!("SENTRY_URL"),
   enable_source_code_context: true,
-  root_source_code_path: File.cwd!(),
-  included_environments: [:prod],
-  environment_name: config_env()
+  root_source_code_paths: [File.cwd!()],
+  environment_name: :dev,
+  client: Cardian.SentryFinchHTTPClient
 
 if config_env() == :prod do
   config :logger,
     level: :info
 
   config :cardian, Cardian.Repo, database: "/db/database.db"
+
+  config :sentry,
+    environment_name: :prod
 end
