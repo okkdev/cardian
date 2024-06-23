@@ -364,4 +364,6 @@ defmodule Cardian.Builder do
         nil
     end
   end
+
+  defp get_card_color(_), do: nil
 end
