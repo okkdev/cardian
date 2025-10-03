@@ -21,8 +21,10 @@ defmodule Cardian.Api.Ygoprodeck do
     {pendulum_effect, description} = parse_effects(resp["desc"])
     types = resp["type"] |> String.trim_trailing("Monster") |> String.split(" ", trim: true)
 
+    id = resp["id"] |> Integer.to_string() |> String.pad_leading(8, "0")
+
     %Card{
-      id: to_string(resp["id"]),
+      id: id,
       type: parse_type(resp["type"]),
       race: resp["race"],
       monster_type: parse_monster_type(resp["frameType"]),
@@ -39,7 +41,7 @@ defmodule Cardian.Api.Ygoprodeck do
       status_tcg: @status_mapping[resp["banlist_info"]["ban_tcg"]],
       status_ocg: @status_mapping[resp["banlist_info"]["ban_ocg"]],
       status_goat: @status_mapping[resp["banlist_info"]["ban_goat"]],
-      url: get_card_link(resp["id"]),
+      url: get_card_link(id),
       sets_paper: get_sets(resp["card_sets"])
     }
   end
