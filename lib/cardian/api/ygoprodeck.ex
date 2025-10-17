@@ -41,7 +41,7 @@ defmodule Cardian.Api.Ygoprodeck do
       status_tcg: @status_mapping[resp["banlist_info"]["ban_tcg"]],
       status_ocg: @status_mapping[resp["banlist_info"]["ban_ocg"]],
       status_goat: @status_mapping[resp["banlist_info"]["ban_goat"]],
-      genesys_points: resp["misc_info"][0]["genesys_points"] || 0,
+      genesys_points: Enum.at(resp["misc_info"], 0, %{})["genesys_points"] || 0,
       url: get_card_link(id),
       sets_paper: get_sets(resp["card_sets"])
     }

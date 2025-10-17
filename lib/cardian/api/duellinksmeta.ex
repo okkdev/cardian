@@ -103,10 +103,10 @@ defmodule Cardian.Api.Duellinksmeta do
     end
   end
 
-  defp cast_dl_details(card, dl_cards) do
+  defp cast_dl_details(%Card{} = card, dl_cards) do
     case Map.fetch(dl_cards, card.id) do
       {:ok, dl_card} ->
-        %Card{
+        %{
           card
           | status_dl: @status_mapping[dl_card["banStatus"]],
             rarity_dl: @rarity_mapping[dl_card["rarity"]],

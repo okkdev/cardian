@@ -2,6 +2,7 @@ import Config
 
 config :nostrum,
   token: System.fetch_env!("CARDIAN_TOKEN"),
+  ffmpeg: nil,
   gateway_intents: [
     :guilds
   ]
@@ -19,7 +20,7 @@ config :sentry,
   enable_source_code_context: true,
   root_source_code_paths: [File.cwd!()],
   environment_name: :dev,
-  client: Cardian.SentryFinchHTTPClient
+  client: SentryReqHttpClient
 
 if config_env() == :prod do
   config :logger,

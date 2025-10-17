@@ -103,10 +103,10 @@ defmodule Cardian.Api.Masterduelmeta do
     end
   end
 
-  defp cast_md_details(card, md_cards) do
+  defp cast_md_details(%Card{} = card, md_cards) do
     case Map.fetch(md_cards, card.id) do
       {:ok, md_card} ->
-        %Card{
+        %{
           card
           | status_md: @status_mapping[md_card["banStatus"]],
             rarity_md: @rarity_mapping[md_card["rarity"]],

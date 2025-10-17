@@ -85,7 +85,7 @@ defmodule Cardian.Builder do
     }
   end
 
-  defp put_format_footer(embed, :paper), do: put_footer(embed, "Format: Paper")
+  defp put_format_footer(embed, :paper), do: put_footer(embed, "Format: Paper (TCG, OCG, Genesys)")
   defp put_format_footer(embed, :md), do: put_footer(embed, "Format: Master Duel")
   defp put_format_footer(embed, :dl), do: put_footer(embed, "Format: Duel Links")
   defp put_format_footer(embed, :sd), do: put_footer(embed, "Format: Speed Duel")

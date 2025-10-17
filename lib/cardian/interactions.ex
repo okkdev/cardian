@@ -6,89 +6,6 @@ defmodule Cardian.Interactions do
   alias Cardian.Configs.UserConfig
   alias Cardian.UserConfigs
 
-  def deploy_commands() do
-    {:ok, _} = Api.bulk_overwrite_global_application_commands(get_commands())
-
-    IO.puts("Commands deployed! (It might take up to an hour to register...)")
-  end
-
-  def get_commands() do
-    [
-      card_command(),
-      parse_card_command(),
-      art_command()
-    ]
-  end
-
-  def card_command do
-    %{
-      name: "card",
-      description: "Get Yu-Gi-Oh! card info",
-      integration_types: [0, 1],
-      contexts: [0, 1, 2],
-      options: [
-        %{
-          type: 3,
-          name: "name",
-          description: "Search a card by name",
-          autocomplete: true,
-          required: true
-        },
-        %{
-          type: 3,
-          name: "format",
-          description: "Which format of the card game (remembers your last choice)",
-          choices: [
-            %{
-              name: "Paper",
-              value: "paper"
-            },
-            %{
-              name: "Master Duel",
-              value: "md"
-            },
-            %{
-              name: "Duel Links",
-              value: "dl"
-            }
-          ]
-        }
-      ]
-    }
-  end
-
-  def parse_card_command do
-    %{
-      type: 3,
-      name: "Embed cards",
-      integration_types: [0, 1],
-      contexts: [0, 1, 2]
-    }
-  end
-
-  def art_command do
-    %{
-      name: "art",
-      description: "Get Yu-Gi-Oh! card art",
-      integration_types: [0, 1],
-      contexts: [0, 1, 2],
-      options: [
-        %{
-          type: 3,
-          name: "name",
-          description: "Search a card by name",
-          autocomplete: true,
-          required: true
-        },
-        %{
-          type: 5,
-          name: "ocg",
-          description: "Show the OCG art (not available for all cards)"
-        }
-      ]
-    }
-  end
-
   # Handle search autocompletion
   def handle(
         %Interaction{
@@ -98,10 +15,11 @@ defmodule Cardian.Interactions do
       when command_name in ["card", "art"] do
     cards = CardRegistry.search_card(query)
 
-    Api.create_interaction_response!(interaction, %{
-      type: 8,
-      data: Builder.build_autocomplete_choices(cards)
-    })
+    {:ok} =
+      Api.Interaction.create_response(interaction, %{
+        type: 8,
+        data: Builder.build_autocomplete_choices(cards)
+      })
   end
 
   # Handle card command
@@ -114,7 +32,7 @@ defmodule Cardian.Interactions do
           user: %{id: user_id}
         } = interaction
       ) do
-    Api.create_interaction_response!(interaction, %{type: 5})
+    {:ok} = Api.Interaction.create_response(interaction, %{type: 5})
 
     case CardRegistry.get_card(card) do
       [c | _] ->
@@ -154,7 +72,7 @@ defmodule Cardian.Interactions do
           ]
         }
 
-        case Api.edit_interaction_response(interaction, msg) do
+        case Api.Interaction.edit_response(interaction, msg) do
           {:ok, _} ->
             :ok
 
@@ -183,24 +101,26 @@ defmodule Cardian.Interactions do
             #{inspect(msg, pretty: true)}
             """)
 
-            Api.edit_interaction_response!(
-              interaction,
-              Builder.build_user_message("Something went wrong... :pensive:")
-            )
+            {:ok, _} =
+              Api.Interaction.edit_response(
+                interaction,
+                Builder.build_user_message("Something went wrong... :pensive:")
+              )
         end
 
       [] ->
-        Api.edit_interaction_response!(
-          interaction,
-          Builder.build_user_message("`#{card}` not found... :pensive:")
-        )
+        {:ok, _} =
+          Api.Interaction.edit_response(
+            interaction,
+            Builder.build_user_message("`#{card}` not found... :pensive:")
+          )
     end
   rescue
     err ->
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
       Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
-      Api.edit_interaction_response!(
+      Api.Interaction.edit_response(
         interaction,
         Builder.build_user_message("Something went wrong... :pensive:")
       )
@@ -227,19 +147,20 @@ defmodule Cardian.Interactions do
 
     case card_names do
       [] ->
-        Api.create_interaction_response!(
-          interaction,
-          %{
-            type: 4,
-            data:
-              Builder.build_user_message(
-                "No card names found. Did you forget to use angle brackets, like this: `<card name>`?"
-              )
-          }
-        )
+        {:ok} =
+          Api.Interaction.create_response(
+            interaction,
+            %{
+              type: 4,
+              data:
+                Builder.build_user_message(
+                  "No card names found. Did you forget to use angle brackets, like this: `<card name>`?"
+                )
+            }
+          )
 
       card_names ->
-        Api.create_interaction_response!(interaction, %{type: 5})
+        {:ok} = Api.Interaction.create_response(interaction, %{type: 5})
 
         cards =
           card_names
@@ -258,18 +179,20 @@ defmodule Cardian.Interactions do
           |> Enum.take(10)
 
         if Enum.empty?(cards) do
-          Api.edit_interaction_response!(
-            interaction,
-            Builder.build_user_message("Cards not found... :pensive:")
-          )
+          {:ok, _} =
+            Api.Interaction.edit_response(
+              interaction,
+              Builder.build_user_message("Cards not found... :pensive:")
+            )
         else
-          Api.delete_interaction_response!(interaction)
+          {:ok} = Api.Interaction.delete_response(interaction)
 
-          Api.create_message!(
-            message.channel_id,
-            embeds: Enum.map(cards, &Builder.build_card_embed(&1)),
-            message_reference: %{message_id: message.id}
-          )
+          {:ok, _} =
+            Api.Message.create(
+              message.channel_id,
+              embeds: Enum.map(cards, &Builder.build_card_embed(&1)),
+              message_reference: %{message_id: message.id}
+            )
         end
     end
   rescue
@@ -277,7 +200,7 @@ defmodule Cardian.Interactions do
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
       Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
-      Api.edit_interaction_response!(
+      Api.Interaction.edit_response(
         interaction,
         Builder.build_user_message("Something went wrong... :pensive:")
       )
@@ -296,13 +219,14 @@ defmodule Cardian.Interactions do
     if Cardian.Api.Bonk.valid_user?(user_id) do
       handle_art(interaction, true)
     else
-      Api.create_interaction_response!(
-        interaction,
-        %{
-          type: 4,
-          data: Builder.build_ocg_kofi_reminder_embed(user_id)
-        }
-      )
+      {:ok} =
+        Api.Interaction.create_response(
+          interaction,
+          %{
+            type: 4,
+            data: Builder.build_ocg_kofi_reminder_embed(user_id)
+          }
+        )
     end
   end
 
@@ -314,13 +238,14 @@ defmodule Cardian.Interactions do
   def handle(interaction) do
     Logger.error("Unknown command: #{inspect(interaction, pretty: true)}")
 
-    Api.create_interaction_response!(
-      interaction,
-      %{
-        type: 4,
-        data: Builder.build_user_message("Something went wrong... :pensive:")
-      }
-    )
+    {:ok} =
+      Api.Interaction.create_response(
+        interaction,
+        %{
+          type: 4,
+          data: Builder.build_user_message("Something went wrong... :pensive:")
+        }
+      )
   end
 
   defp handle_art(
@@ -332,7 +257,7 @@ defmodule Cardian.Interactions do
          } = interaction,
          ocg
        ) do
-    Api.create_interaction_response!(interaction, %{type: 5})
+    {:ok} = Api.Interaction.create_response(interaction, %{type: 5})
 
     case CardRegistry.get_card(card) do
       [c | _] ->
@@ -342,7 +267,7 @@ defmodule Cardian.Interactions do
           {:ok, image_url} ->
             msg = Builder.build_art_message(c, image_url)
 
-            case Api.edit_interaction_response(interaction, msg) do
+            case Api.Interaction.edit_response(interaction, msg) do
               {:ok, _} ->
                 :ok
 
@@ -372,33 +297,36 @@ defmodule Cardian.Interactions do
                 #{inspect(msg, pretty: true)}
                 """)
 
-                Api.edit_interaction_response!(
-                  interaction,
-                  Builder.build_user_message("Something went wrong... :pensive:")
-                )
+                {:ok, _} =
+                  Api.Interaction.edit_response(
+                    interaction,
+                    Builder.build_user_message("Something went wrong... :pensive:")
+                  )
             end
 
           _ ->
-            Api.edit_interaction_response!(
-              interaction,
-              Builder.build_user_message(
-                "#{if c.ocg, do: "OCG "}Art for `#{c.name}` not found... :pensive:"
+            {:ok, _} =
+              Api.Interaction.edit_response(
+                interaction,
+                Builder.build_user_message(
+                  "#{if c.ocg, do: "OCG "}Art for `#{c.name}` not found... :pensive:"
+                )
               )
-            )
         end
 
       [] ->
-        Api.edit_interaction_response!(
-          interaction,
-          Builder.build_user_message("`#{card}` not found... :pensive:")
-        )
+        {:ok, _} =
+          Api.Interaction.edit_response(
+            interaction,
+            Builder.build_user_message("`#{card}` not found... :pensive:")
+          )
     end
   rescue
     err ->
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
       Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
-      Api.edit_interaction_response!(
+      Api.Interaction.edit_response(
         interaction,
         Builder.build_user_message("Something went wrong... :pensive:")
       )
