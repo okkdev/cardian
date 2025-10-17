@@ -226,7 +226,11 @@ defmodule Cardian.Builder do
   defp put_card_rarity(_), do: ""
 
   defp put_card_status(%Card{} = card, :paper) do
-    "**TCG Status**: #{status_icon(card.status_tcg)}\n**OCG Status**: #{status_icon(card.status_ocg)}"
+    """
+    **TCG**: #{status_icon(card.status_tcg)}
+    **OCG**: #{status_icon(card.status_ocg)}
+    **Genesys**: #{card.genesys_points} Points
+    """
   end
 
   defp put_card_status(%Card{} = card, :md) do

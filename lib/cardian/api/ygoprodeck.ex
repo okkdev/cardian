@@ -4,7 +4,7 @@ defmodule Cardian.Api.Ygoprodeck do
   @url "https://db.ygoprodeck.com/api/v7/cardinfo.php"
 
   def get_all_cards do
-    Req.request(url: @url)
+    Req.request(url: @url, params: [format: "genesys", misc: "yes"])
     |> handle_response()
     |> Task.async_stream(&cast_card/1, ordered: false)
     |> Stream.map(fn {:ok, card} -> card end)
@@ -41,6 +41,7 @@ defmodule Cardian.Api.Ygoprodeck do
       status_tcg: @status_mapping[resp["banlist_info"]["ban_tcg"]],
       status_ocg: @status_mapping[resp["banlist_info"]["ban_ocg"]],
       status_goat: @status_mapping[resp["banlist_info"]["ban_goat"]],
+      genesys_points: resp["misc_info"][0]["genesys_points"] || 0,
       url: get_card_link(id),
       sets_paper: get_sets(resp["card_sets"])
     }

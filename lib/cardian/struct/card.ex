@@ -19,6 +19,7 @@ defmodule Cardian.Struct.Card do
     :status_tcg,
     :status_ocg,
     :status_goat,
+    :genesys_points,
     :rarity_md,
     :rarity_dl,
     :image_url,
