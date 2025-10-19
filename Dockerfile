@@ -1,4 +1,4 @@
-FROM elixir:1.14-otp-25-alpine AS builder
+FROM hexpm/elixir:1.19-erlang-28.1-alpine-3.22.2 AS builder
 
 ENV MIX_ENV=prod
 
@@ -18,7 +18,7 @@ RUN mix deps.compile
 RUN mix sentry.package_source_code
 RUN mix release
 
-FROM alpine:3.18 AS runner
+FROM alpine:3.22 AS runner
 
 RUN apk update && \
   apk add --no-cache bash libstdc++ openssl ncurses-libs
