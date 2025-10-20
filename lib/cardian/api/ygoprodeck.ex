@@ -14,7 +14,8 @@ defmodule Cardian.Api.Ygoprodeck do
   @status_mapping %{
     "Semi-Limited" => :semilimited,
     "Limited" => :limited,
-    "Banned" => :forbidden
+    "Banned" => :forbidden,
+    "Forbidden" => :forbidden
   }
 
   defp cast_card(resp) do
