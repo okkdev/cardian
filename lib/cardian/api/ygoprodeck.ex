@@ -22,10 +22,8 @@ defmodule Cardian.Api.Ygoprodeck do
     {pendulum_effect, description} = parse_effects(resp["desc"])
     types = resp["type"] |> String.trim_trailing("Monster") |> String.split(" ", trim: true)
 
-    id = resp["id"] |> Integer.to_string() |> String.pad_leading(8, "0")
-
     %Card{
-      id: id,
+      id: resp["id"],
       type: parse_type(resp["type"]),
       race: resp["race"],
       monster_type: parse_monster_type(resp["frameType"]),
@@ -114,7 +112,9 @@ defmodule Cardian.Api.Ygoprodeck do
   defp get_sets(_), do: nil
 
   defp get_card_link(card_id) do
-    "https://yugipedia.com/wiki/#{card_id}"
+    id = card_id |> Integer.to_string() |> String.pad_leading(8, "0")
+
+    "https://yugipedia.com/wiki/#{id}"
     |> URI.encode()
   end
 
