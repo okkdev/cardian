@@ -22,8 +22,10 @@ defmodule Cardian.Api.Ygoprodeck do
     {pendulum_effect, description} = parse_effects(resp["desc"])
     types = resp["type"] |> String.trim_trailing("Monster") |> String.split(" ", trim: true)
 
+    id = resp["id"] |> Integer.to_string()
+
     %Card{
-      id: resp["id"],
+      id: id,
       type: parse_type(resp["type"]),
       race: resp["race"],
       monster_type: parse_monster_type(resp["frameType"]),
@@ -41,7 +43,7 @@ defmodule Cardian.Api.Ygoprodeck do
       status_ocg: @status_mapping[resp["banlist_info"]["ban_ocg"]],
       status_goat: @status_mapping[resp["banlist_info"]["ban_goat"]],
       genesys_points: Enum.at(resp["misc_info"], 0, %{})["genesys_points"] || 0,
-      url: get_card_link(resp["id"]),
+      url: get_card_link(id),
       sets_paper: get_sets(resp["card_sets"])
     }
   end
@@ -112,7 +114,7 @@ defmodule Cardian.Api.Ygoprodeck do
   defp get_sets(_), do: nil
 
   defp get_card_link(card_id) do
-    id = card_id |> Integer.to_string() |> String.pad_leading(8, "0")
+    id = card_id |> String.pad_leading(8, "0")
 
     "https://yugipedia.com/wiki/#{id}"
     |> URI.encode()
