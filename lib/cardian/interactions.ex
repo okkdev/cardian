@@ -101,11 +101,7 @@ defmodule Cardian.Interactions do
             #{inspect(msg, pretty: true)}
             """)
 
-            {:ok, _} =
-              Api.Interaction.edit_response(
-                interaction,
-                Builder.build_user_message("Something went wrong... :pensive:")
-              )
+            {:ok, _} = respond_error(interaction)
         end
 
       [] ->
@@ -120,10 +116,7 @@ defmodule Cardian.Interactions do
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
       Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
-      Api.Interaction.edit_response(
-        interaction,
-        Builder.build_user_message("Something went wrong... :pensive:")
-      )
+      respond_error(interaction)
   end
 
   # Handle right click on message to parse cards in angle brackets < >
@@ -200,10 +193,7 @@ defmodule Cardian.Interactions do
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
       Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
-      Api.Interaction.edit_response(
-        interaction,
-        Builder.build_user_message("Something went wrong... :pensive:")
-      )
+      respond_error(interaction)
   end
 
   # Handle premium ocg art requests
@@ -297,11 +287,7 @@ defmodule Cardian.Interactions do
                 #{inspect(msg, pretty: true)}
                 """)
 
-                {:ok, _} =
-                  Api.Interaction.edit_response(
-                    interaction,
-                    Builder.build_user_message("Something went wrong... :pensive:")
-                  )
+                {:ok, _} = respond_error(interaction)
             end
 
           _ ->
@@ -326,9 +312,16 @@ defmodule Cardian.Interactions do
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
       Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
-      Api.Interaction.edit_response(
-        interaction,
-        Builder.build_user_message("Something went wrong... :pensive:")
-      )
+      respond_error(interaction)
+  end
+
+  defp respond_error(interaction) do
+    Api.Interaction.edit_response(
+      interaction,
+      Builder.build_user_message("""
+      Something went wrong... :pensive:
+      If this issue persists, report it on the [Cardian Support Server](<https://discord.gg/GDt8p2Jyrn>).
+      """)
+    )
   end
 end
