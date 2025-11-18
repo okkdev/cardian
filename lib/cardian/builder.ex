@@ -229,9 +229,15 @@ defmodule Cardian.Builder do
 
   defp put_card_status(%Card{} = card, :paper) do
     points =
-      case card.genesys_points do
-        1 -> "1 Point"
-        n -> "#{n} Points"
+      case card.monster_type do
+        t when t in [:link, :pendulum] ->
+          status_icon(:forbidden)
+
+        _ ->
+          case card.genesys_points do
+            1 -> "1 Point"
+            n -> "#{n} Points"
+          end
       end
 
     """
