@@ -145,6 +145,9 @@ defmodule Cardian.CardRegistry do
       Logger.error(Exception.format(:error, err, __STACKTRACE__))
       Logger.error("Update failed. Rescheduling...")
       schedule_update()
+
+      Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
+
       {:noreply, nil}
   end
 
