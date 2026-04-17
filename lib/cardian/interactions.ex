@@ -77,29 +77,12 @@ defmodule Cardian.Interactions do
             :ok
 
           {:error, reason} ->
-            extra = %{
+            report_discord_error(reason, %{
               interaction: "/card",
               card: card,
               card_result: Map.from_struct(c),
               built_message: msg
-            }
-
-            if is_exception(reason) do
-              Sentry.capture_exception(reason, extra: extra)
-            else
-              Sentry.capture_message(inspect(reason), extra: extra)
-            end
-
-            Logger.error("""
-            Card name/id:
-            #{card}
-
-            Found Card:
-            #{inspect(c, pretty: true)}
-
-            Built Message:
-            #{inspect(msg, pretty: true)}
-            """)
+            })
 
             {:ok, _} = respond_error(interaction)
         end
@@ -262,30 +245,13 @@ defmodule Cardian.Interactions do
                 :ok
 
               {:error, reason} ->
-                extra = %{
+                report_discord_error(reason, %{
                   interaction: "/art",
                   card: card,
                   card_result: Map.from_struct(c),
                   image_url: image_url,
                   built_message: msg
-                }
-
-                if is_exception(reason) do
-                  Sentry.capture_exception(reason, extra: extra)
-                else
-                  Sentry.capture_message(inspect(reason), extra: extra)
-                end
-
-                Logger.error("""
-                Card name/id:
-                #{card}
-
-                Found Card:
-                #{inspect(c, pretty: true)}
-
-                Built Message:
-                #{inspect(msg, pretty: true)}
-                """)
+                })
 
                 {:ok, _} = respond_error(interaction)
             end
@@ -313,6 +279,16 @@ defmodule Cardian.Interactions do
       Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
       respond_error(interaction)
+  end
+
+  defp report_discord_error(reason, extra) do
+    if is_exception(reason) do
+      Sentry.capture_exception(reason, extra: extra)
+    else
+      Sentry.capture_message(inspect(reason), extra: extra)
+    end
+
+    Logger.error("Discord API error: #{inspect(reason)}, extra: #{inspect(extra)}")
   end
 
   defp respond_error(interaction) do

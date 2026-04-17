@@ -17,21 +17,35 @@ defmodule Cardian.Api.Duellinksmeta do
   }
 
   def get_all_cards_raw() do
-    pages = ceil(get_card_amount() / 3000)
+    with {:ok, count} <- get_card_amount() do
+      pages = ceil(count / 3000)
 
-    1..pages
-    |> Task.async_stream(fn page ->
-      url =
-        "#{@url}/cards?limit=3000&page=#{page}"
-        |> URI.encode()
+      results =
+        1..pages
+        |> Task.async_stream(fn page ->
+          url =
+            "#{@url}/cards?limit=3000&page=#{page}"
+            |> URI.encode()
 
-      Req.request(url: url)
-      |> handle_response()
-    end)
-    |> Stream.flat_map(fn {:ok, res} -> res end)
-    |> Stream.filter(&(&1["alternateArt"] != true))
-    |> Stream.filter(&(&1["konamiID"] != nil))
-    |> Enum.to_list()
+          Req.request(url: url)
+          |> handle_response()
+        end)
+        |> Enum.to_list()
+
+      case Enum.find(results, &match?({:ok, {:error, _}}, &1)) do
+        nil ->
+          cards =
+            results
+            |> Enum.flat_map(fn {:ok, {:ok, body}} ->
+              Enum.filter(body, &(&1["alternateArt"] != true and &1["konamiID"] != nil))
+            end)
+
+          {:ok, cards}
+
+        {:ok, {:error, reason}} ->
+          {:error, reason}
+      end
+    end
   end
 
   def update_card_details(cards, raw_dl_cards) do
@@ -45,30 +59,35 @@ defmodule Cardian.Api.Duellinksmeta do
       (@url <> "/cards?collectionCount=true")
       |> URI.encode()
 
-    Req.request(url: url)
-    |> case do
+    case Req.request(url: url) do
       {:ok, res} ->
-        String.to_integer(res.body)
+        {:ok, String.to_integer(res.body)}
 
       {:error, reason} ->
-        raise(inspect(reason))
+        {:error, reason}
     end
   end
 
   def get_all_sets() do
-    pages = ceil(get_sets_amount() / 3000)
+    with {:ok, count} <- get_sets_amount() do
+      pages = ceil(count / 3000)
 
-    1..pages
-    |> Stream.flat_map(fn page ->
-      url =
-        "#{@url}/sets?limit=3000&page=#{page}"
-        |> URI.encode()
+      1..pages
+      |> Enum.reduce_while({:ok, []}, fn page, {:ok, acc} ->
+        url =
+          "#{@url}/sets?limit=3000&page=#{page}"
+          |> URI.encode()
 
-      Req.request(url: url)
-      |> handle_response()
-    end)
-    |> Stream.map(&cast_set/1)
-    |> Enum.to_list()
+        case Req.request(url: url) |> handle_response() do
+          {:ok, body} -> {:cont, {:ok, acc ++ body}}
+          {:error, _} = err -> {:halt, err}
+        end
+      end)
+      |> case do
+        {:ok, raw_sets} -> {:ok, Enum.map(raw_sets, &cast_set/1)}
+        {:error, _} = err -> err
+      end
+    end
   end
 
   def get_sets_amount() do
@@ -76,13 +95,12 @@ defmodule Cardian.Api.Duellinksmeta do
       (@url <> "/sets?collectionCount=true")
       |> URI.encode()
 
-    Req.request(url: url)
-    |> case do
+    case Req.request(url: url) do
       {:ok, res} ->
-        String.to_integer(res.body)
+        {:ok, String.to_integer(res.body)}
 
       {:error, reason} ->
-        raise(inspect(reason))
+        {:error, reason}
     end
   end
 
@@ -96,10 +114,10 @@ defmodule Cardian.Api.Duellinksmeta do
   defp handle_response(resp) do
     case resp do
       {:ok, res} ->
-        res.body
+        {:ok, res.body}
 
       {:error, reason} ->
-        raise(inspect(reason))
+        {:error, reason}
     end
   end
 

@@ -4,11 +4,15 @@ defmodule Cardian.Api.Ygoprodeck do
   @url "https://db.ygoprodeck.com/api/v7/cardinfo.php"
 
   def get_all_cards do
-    Req.request(url: @url, params: [format: "genesys", misc: "yes"])
-    |> handle_response()
-    |> Task.async_stream(&cast_card/1, ordered: false)
-    |> Stream.map(fn {:ok, card} -> card end)
-    |> Enum.to_list()
+    with {:ok, data} <-
+           Req.request(url: @url, params: [format: "genesys", misc: "yes"]) |> handle_response() do
+      cards =
+        data
+        |> Task.async_stream(&cast_card/1, ordered: false)
+        |> Enum.map(fn {:ok, card} -> card end)
+
+      {:ok, cards}
+    end
   end
 
   @status_mapping %{
@@ -123,10 +127,10 @@ defmodule Cardian.Api.Ygoprodeck do
   defp handle_response(resp) do
     case resp do
       {:ok, res} ->
-        res.body["data"]
+        {:ok, res.body["data"]}
 
       {:error, reason} ->
-        raise(inspect(reason))
+        {:error, reason}
     end
   end
 end

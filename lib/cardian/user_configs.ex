@@ -11,7 +11,7 @@ defmodule Cardian.UserConfigs do
     Repo.get_by(UserConfig, discord_id: discord_id)
   end
 
-  def create_or_update_config(attrs \\ %{}) do
+  def create_or_update_config(attrs) do
     case get_config_by_discord_id(attrs.discord_id) do
       nil -> %UserConfig{discord_id: attrs.discord_id}
       config -> config

@@ -134,45 +134,44 @@ defmodule Cardian.CardRegistry do
 
   @impl true
   def handle_info(:update_registry, _) do
-    update_cards()
-    update_sets()
-    generate_index()
+    with :ok <- update_cards(),
+         :ok <- update_sets() do
+      generate_index()
+    else
+      {:error, reason} ->
+        Logger.error("Registry update failed: #{inspect(reason)}")
+        Sentry.capture_message("Card registry update failed", extra: %{reason: inspect(reason)})
+    end
 
     schedule_update()
     {:noreply, nil}
-  rescue
-    err ->
-      Logger.error(Exception.format(:error, err, __STACKTRACE__))
-      Logger.error("Update failed. Rescheduling...")
-      schedule_update()
-
-      Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
-
-      {:noreply, nil}
   end
 
   defp update_sets() do
-    sets = @extra_sets ++ Masterduelmeta.get_all_sets() ++ Duellinksmeta.get_all_sets()
-
-    true = :ets.insert(:sets, Enum.map(sets, &{&1.id, &1}))
-
-    Logger.info("Sets updated")
+    with {:ok, md_sets} <- Masterduelmeta.get_all_sets(),
+         {:ok, dl_sets} <- Duellinksmeta.get_all_sets() do
+      sets = @extra_sets ++ md_sets ++ dl_sets
+      true = :ets.insert(:sets, Enum.map(sets, &{&1.id, &1}))
+      Logger.info("Sets updated")
+      :ok
+    end
   end
 
   defp update_cards() do
-    ygopro_cards = Ygoprodeck.get_all_cards()
-    md_cards_raw = Masterduelmeta.get_all_cards_raw()
-    dl_cards_raw = Duellinksmeta.get_all_cards_raw()
+    with {:ok, ygopro_cards} <- Ygoprodeck.get_all_cards(),
+         {:ok, md_cards_raw} <- Masterduelmeta.get_all_cards_raw(),
+         {:ok, dl_cards_raw} <- Duellinksmeta.get_all_cards_raw() do
+      updated_cards =
+        ygopro_cards
+        |> Masterduelmeta.update_card_details(md_cards_raw)
+        |> Duellinksmeta.update_card_details(dl_cards_raw)
 
-    updated_cards =
-      ygopro_cards
-      |> Masterduelmeta.update_card_details(md_cards_raw)
-      |> Duellinksmeta.update_card_details(dl_cards_raw)
+      cards = @extra_cards ++ updated_cards
 
-    cards = @extra_cards ++ updated_cards
-
-    true = :ets.insert(:cards, Enum.map(cards, &{&1.id, &1}))
-    Logger.info("Cards updated")
+      true = :ets.insert(:cards, Enum.map(cards, &{&1.id, &1}))
+      Logger.info("Cards updated")
+      :ok
+    end
   end
 
   defp generate_index() do

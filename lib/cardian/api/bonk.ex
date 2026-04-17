@@ -6,7 +6,10 @@ defmodule Cardian.Api.Bonk do
   end
 
   def get_valid_users() do
-    Req.get!(bonk_url()).body
+    case Req.request(url: bonk_url()) do
+      {:ok, resp} -> resp.body
+      {:error, _} -> []
+    end
   end
 
   defp bonk_url() do
