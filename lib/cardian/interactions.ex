@@ -1,8 +1,9 @@
 defmodule Cardian.Interactions do
   require Logger
+  require OpenTelemetry.Tracer, as: Tracer
   alias Nostrum.Api
   alias Nostrum.Struct.Interaction
-  alias Cardian.{Builder, CardRegistry}
+  alias Cardian.{Builder, CardRegistry, Metrics}
   alias Cardian.Api.Images
   alias Cardian.Configs.UserConfig
   alias Cardian.UserConfigs
@@ -14,13 +15,24 @@ defmodule Cardian.Interactions do
         } = interaction
       )
       when command_name in ["card", "art"] do
-    cards = CardRegistry.search_card(query)
+    Tracer.with_span "interaction.autocomplete",
+      attributes: %{"command" => command_name, "query" => query} do
+      cards =
+        Tracer.with_span "card_registry.search" do
+          CardRegistry.search_card(query)
+        end
 
-    :ok =
-      Api.Interaction.create_response(interaction, %{
-        type: 8,
-        data: Builder.build_autocomplete_choices(cards)
-      })
+      Tracer.set_attribute("results", length(cards))
+
+      choices = Builder.build_autocomplete_choices(cards)
+
+      Tracer.with_span "discord.create_response" do
+        Api.Interaction.create_response(interaction, %{
+          type: 8,
+          data: choices
+        })
+      end
+    end
   end
 
   # Handle card command
@@ -33,52 +45,45 @@ defmodule Cardian.Interactions do
           user: %{id: user_id}
         } = interaction
       ) do
-    :ok = Api.Interaction.create_response(interaction, %{type: 5})
+    Tracer.with_span "interaction.card",
+      attributes: %{"query" => card, "user_id" => to_string(user_id)} do
+      defer_task = Task.async(fn -> Api.Interaction.create_response(interaction, %{type: 5}) end)
 
-    case CardRegistry.get_card(card) do
-      [c | _] ->
-        format = resolve_format(c.type, options, user_id)
+      case Tracer.with_span("card_registry.lookup", do: CardRegistry.get_card(card)) do
+        [c | _] ->
+          Metrics.count_card_request(c.name, "card")
+          Tracer.set_attribute("card", c.name)
+          format = resolve_format(c.type, options, user_id)
+          Tracer.set_attribute("format", to_string(format))
 
-        thumbnail_url =
-          case Images.get_image_url(c) do
-            {:ok, url} -> url
-            _ -> nil
-          end
+          thumbnail_url =
+            Tracer.with_span "images.get_url" do
+              case Images.get_image_url(c) do
+                {:ok, url} -> url
+                _ -> nil
+              end
+            end
 
-        msg = %{
-          embeds: [
-            Builder.build_card_embed(c, format, thumbnail_url)
-          ]
-        }
+          msg = %{
+            embeds: [
+              Builder.build_card_embed(c, format, thumbnail_url)
+            ]
+          }
 
-        case Api.Interaction.edit_response(interaction, msg) do
-          {:ok, _} ->
-            :ok
+          Task.await(defer_task)
+          edit_response(interaction, msg)
 
-          {:error, reason} ->
-            report_discord_error(reason, %{
-              interaction: "/card",
-              card: card,
-              card_result: Map.from_struct(c),
-              built_message: msg
-            })
+        [] ->
+          Tracer.set_attribute("card_found", false)
 
-            {:ok, _} = respond_error(interaction)
-        end
+          Task.await(defer_task)
 
-      [] ->
-        {:ok, _} =
           Api.Interaction.edit_response(
             interaction,
             Builder.build_user_message("`#{card}` not found... :pensive:")
           )
+      end
     end
-  rescue
-    err ->
-      Logger.error(Exception.format(:error, err, __STACKTRACE__))
-      Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
-
-      respond_error(interaction)
   end
 
   # Handle right click on message to parse cards in angle brackets < >
@@ -92,17 +97,19 @@ defmodule Cardian.Interactions do
           }
         } = interaction
       ) do
-    [message | _] =
-      messages
-      |> Map.values()
+    Tracer.with_span "interaction.embed_cards" do
+      [message | _] =
+        messages
+        |> Map.values()
 
-    {:ok, card_names, _, _, _, _} =
-      message.content
-      |> Cardian.Parser.card_names()
+      {:ok, card_names, _, _, _, _} =
+        message.content
+        |> Cardian.Parser.card_names()
 
-    case card_names do
-      [] ->
-        :ok =
+      Tracer.set_attribute("card_count", length(card_names))
+
+      case card_names do
+        [] ->
           Api.Interaction.create_response(
             interaction,
             %{
@@ -114,61 +121,62 @@ defmodule Cardian.Interactions do
             }
           )
 
-      card_names ->
-        :ok = Api.Interaction.create_response(interaction, %{type: 5})
+        card_names ->
+          defer_task =
+            Task.async(fn -> Api.Interaction.create_response(interaction, %{type: 5}) end)
 
-        cards =
-          card_names
-          |> Enum.map(
-            &case CardRegistry.get_card(&1) do
-              [c | _] ->
-                c
-
-              [] ->
-                nil
+          cards =
+            Tracer.with_span "card_registry.lookup_batch" do
+              card_names
+              |> Enum.map(
+                &case CardRegistry.get_card(&1) do
+                  [c | _] -> c
+                  [] -> nil
+                end
+              )
+              |> Enum.dedup()
+              |> Enum.filter(&(not is_nil(&1)))
+              |> Enum.take(10)
             end
-          )
-          |> Enum.dedup()
-          |> Enum.filter(&(not is_nil(&1)))
-          # Limit to 10 cards because of embed limit
-          |> Enum.take(10)
 
-        if Enum.empty?(cards) do
-          {:ok, _} =
+          Tracer.set_attribute("cards_found", length(cards))
+
+          Task.await(defer_task)
+
+          if Enum.empty?(cards) do
             Api.Interaction.edit_response(
               interaction,
               Builder.build_user_message("Cards not found... :pensive:")
             )
-        else
-          :ok = Api.Interaction.delete_response(interaction)
+          else
+            Enum.each(cards, &Metrics.count_card_request(&1.name, "embed_cards"))
+            Api.Interaction.delete_response(interaction)
 
-          embeds =
-            cards
-            |> Task.async_stream(fn card ->
-              thumbnail_url =
-                case Images.get_image_url(card) do
-                  {:ok, url} -> url
-                  _ -> nil
-                end
+            embeds =
+              Tracer.with_span "images.get_urls_batch" do
+                cards
+                |> Task.async_stream(fn card ->
+                  thumbnail_url =
+                    case Images.get_image_url(card) do
+                      {:ok, url} -> url
+                      _ -> nil
+                    end
 
-              Builder.build_card_embed(card, :paper, thumbnail_url)
-            end)
-            |> Enum.map(fn {:ok, embed} -> embed end)
+                  Builder.build_card_embed(card, :paper, thumbnail_url)
+                end)
+                |> Enum.map(fn {:ok, embed} -> embed end)
+              end
 
-          {:ok, _} =
-            Api.Message.create(
-              message.channel_id,
-              embeds: embeds,
-              message_reference: %{message_id: message.id}
-            )
-        end
+            Tracer.with_span "discord.create_message" do
+              Api.Message.create(
+                message.channel_id,
+                embeds: embeds,
+                message_reference: %{message_id: message.id}
+              )
+            end
+          end
+      end
     end
-  rescue
-    err ->
-      Logger.error(Exception.format(:error, err, __STACKTRACE__))
-      Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
-
-      respond_error(interaction)
   end
 
   # Handle premium ocg art requests
@@ -181,10 +189,13 @@ defmodule Cardian.Interactions do
           user: %{id: user_id}
         } = interaction
       ) do
-    if Cardian.Api.Bonk.valid_user?(user_id) do
-      handle_art(interaction, true)
-    else
-      :ok =
+    Tracer.with_span "interaction.art",
+      attributes: %{"ocg" => true, "user_id" => to_string(user_id)} do
+      if Cardian.Api.Bonk.valid_user?(user_id) do
+        handle_art(interaction, true)
+      else
+        Tracer.set_attribute("ocg_denied", true)
+
         Api.Interaction.create_response(
           interaction,
           %{
@@ -192,18 +203,21 @@ defmodule Cardian.Interactions do
             data: Builder.build_ocg_kofi_reminder_embed(user_id)
           }
         )
+      end
     end
   end
 
   # Handle regular art calls
   def handle(%Interaction{data: %{name: "art"}} = interaction) do
-    handle_art(interaction, false)
+    Tracer.with_span "interaction.art", attributes: %{"ocg" => false} do
+      handle_art(interaction, false)
+    end
   end
 
   def handle(interaction) do
-    Logger.error("Unknown command: #{inspect(interaction, pretty: true)}")
+    Tracer.with_span "interaction.unknown" do
+      Logger.error("Unknown command: #{inspect(interaction, pretty: true)}")
 
-    :ok =
       Api.Interaction.create_response(
         interaction,
         %{
@@ -211,6 +225,7 @@ defmodule Cardian.Interactions do
           data: Builder.build_user_message("Something went wrong... :pensive:")
         }
       )
+    end
   end
 
   defp handle_art(
@@ -222,61 +237,69 @@ defmodule Cardian.Interactions do
          } = interaction,
          ocg
        ) do
-    :ok = Api.Interaction.create_response(interaction, %{type: 5})
+    Tracer.set_attribute("query", card)
+    defer_task = Task.async(fn -> Api.Interaction.create_response(interaction, %{type: 5}) end)
 
-    case CardRegistry.get_card(card) do
+    case Tracer.with_span("card_registry.lookup", do: CardRegistry.get_card(card)) do
       [c | _] ->
+        Metrics.count_card_request(c.name, "art")
+        Tracer.set_attribute("card", c.name)
         c = %{c | ocg: ocg}
 
         ocg_task =
           if not ocg, do: Task.async(fn -> Images.ocg_available?(c.id) end)
 
-        case Images.get_image_url(c) do
+        case Tracer.with_span("images.get_url", do: Images.get_image_url(c)) do
           {:ok, image_url} ->
             ocg_available = if ocg_task, do: Task.await(ocg_task, 3000), else: false
             msg = Builder.build_art_message(c, image_url, ocg_available)
 
-            case Api.Interaction.edit_response(interaction, msg) do
-              {:ok, _} ->
-                :ok
-
-              {:error, reason} ->
-                report_discord_error(reason, %{
-                  interaction: "/art",
-                  card: card,
-                  card_result: Map.from_struct(c),
-                  image_url: image_url,
-                  built_message: msg
-                })
-
-                {:ok, _} = respond_error(interaction)
-            end
+            Task.await(defer_task)
+            edit_response(interaction, msg)
 
           _ ->
+            Tracer.add_event("image_not_found", %{"card" => c.name})
             if ocg_task, do: Task.shutdown(ocg_task, :brutal_kill)
 
-            {:ok, _} =
-              Api.Interaction.edit_response(
-                interaction,
-                Builder.build_user_message(
-                  "#{if c.ocg, do: "OCG "}Art for `#{c.name}` not found... :pensive:"
-                )
+            Task.await(defer_task)
+
+            Api.Interaction.edit_response(
+              interaction,
+              Builder.build_user_message(
+                "#{if c.ocg, do: "OCG "}Art for `#{c.name}` not found... :pensive:"
               )
+            )
         end
 
       [] ->
-        {:ok, _} =
-          Api.Interaction.edit_response(
-            interaction,
-            Builder.build_user_message("`#{card}` not found... :pensive:")
-          )
-    end
-  rescue
-    err ->
-      Logger.error(Exception.format(:error, err, __STACKTRACE__))
-      Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
+        Tracer.set_attribute("card_found", false)
 
-      respond_error(interaction)
+        Task.await(defer_task)
+
+        Api.Interaction.edit_response(
+          interaction,
+          Builder.build_user_message("`#{card}` not found... :pensive:")
+        )
+    end
+  end
+
+  @error_message """
+  Something went wrong... :pensive:
+  If this issue persists, report it on the [Cardian Support Server](<https://discord.gg/GDt8p2Jyrn>).
+  """
+
+  defp edit_response(interaction, msg) do
+    Tracer.with_span "discord.edit_response" do
+      case Api.Interaction.edit_response(interaction, msg) do
+        {:ok, _} = result ->
+          result
+
+        {:error, reason} ->
+          Tracer.set_status(:error, inspect(reason))
+          Logger.error("edit_response failed: #{inspect(reason)}")
+          Api.Interaction.edit_response(interaction, Builder.build_user_message(@error_message))
+      end
+    end
   end
 
   defp resolve_format(:skill, _options, _user_id), do: :sd
@@ -294,25 +317,5 @@ defmodule Cardian.Interactions do
           _ -> :paper
         end
     end
-  end
-
-  defp report_discord_error(reason, extra) do
-    if is_exception(reason) do
-      Sentry.capture_exception(reason, extra: extra)
-    else
-      Sentry.capture_message(inspect(reason), extra: extra)
-    end
-
-    Logger.error("Discord API error: #{inspect(reason)}, extra: #{inspect(extra)}")
-  end
-
-  defp respond_error(interaction) do
-    Api.Interaction.edit_response(
-      interaction,
-      Builder.build_user_message("""
-      Something went wrong... :pensive:
-      If this issue persists, report it on the [Cardian Support Server](<https://discord.gg/GDt8p2Jyrn>).
-      """)
-    )
   end
 end

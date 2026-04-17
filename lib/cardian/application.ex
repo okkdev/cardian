@@ -8,6 +8,7 @@ defmodule Cardian.Application do
   @impl true
   def start(_type, _args) do
     :ets.new(:bonk_cache, [:set, :public, :named_table, read_concurrency: true])
+    Cardian.Metrics.setup()
 
     bot_options = %{
       consumer: Cardian.EventConsumer,

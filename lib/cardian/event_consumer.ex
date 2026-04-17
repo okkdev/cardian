@@ -9,7 +9,11 @@ defmodule Cardian.EventConsumer do
   end
 
   def handle_event({:INTERACTION_CREATE, interaction, _ws_state}) do
-    Interactions.handle(interaction)
+    command = interaction.data.name || "unknown"
+    {duration, _} = :timer.tc(fn -> Interactions.handle(interaction) end)
+
+    Cardian.Metrics.count_interaction(command)
+    Cardian.Metrics.record_duration(command, div(duration, 1000))
   end
 
   def handle_event(_), do: :ok

@@ -8,7 +8,7 @@ defmodule Cardian.Api.Ygoprodeck do
            Req.request(url: @url, params: [format: "genesys", misc: "yes"]) |> handle_response() do
       cards =
         data
-        |> Task.async_stream(&cast_card/1, ordered: false)
+        |> Task.async_stream(&cast_card/1, ordered: false, timeout: 10_000)
         |> Enum.map(fn {:ok, card} -> card end)
 
       {:ok, cards}

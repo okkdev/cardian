@@ -5,7 +5,7 @@ defmodule Cardian.MixProject do
     [
       app: :cardian,
       version: "0.1.0",
-      elixir: "~> 1.12",
+      elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -24,11 +24,21 @@ defmodule Cardian.MixProject do
     [
       {:nostrum, github: "Kraigie/nostrum", ref: "03b06ba1c5094b83991097b1ce76b5fe2740324c"},
       {:req, "~> 0.5.0"},
-      {:nimble_parsec, "~> 1.2"},
-      {:sentry, "~> 11.0"},
+      {:nimble_parsec, "~> 1.4"},
       {:ecto_sql, "~> 3.13"},
       {:ecto_sqlite3, "~> 0.22"},
-      {:ecto_ulid, "~> 0.3.0"}
+      {:ecto_ulid, "~> 0.3.0"},
+      {:opentelemetry, "~> 1.7"},
+      {:opentelemetry_experimental,
+       github: "open-telemetry/opentelemetry-erlang",
+       sparse: "apps/opentelemetry_experimental",
+       override: true},
+      {:opentelemetry_api, "~> 1.5"},
+      {:opentelemetry_api_experimental,
+       github: "open-telemetry/opentelemetry-erlang",
+       sparse: "apps/opentelemetry_api_experimental",
+       override: true},
+      {:opentelemetry_exporter, "~> 1.10"}
     ]
   end
 end

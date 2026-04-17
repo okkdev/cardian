@@ -26,7 +26,7 @@ defmodule Cardian.Api.MetaSite do
 
         Req.request(url: url)
         |> handle_response()
-      end)
+      end, timeout: 10_000)
       |> Enum.reduce_while({:ok, []}, fn
         {:ok, {:ok, body}}, {:ok, acc} ->
           cards = Enum.filter(body, &(&1["alternateArt"] != true and &1["konamiID"] != nil))

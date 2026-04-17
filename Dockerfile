@@ -15,7 +15,6 @@ COPY . .
 
 RUN mix deps.get
 RUN mix deps.compile
-RUN mix sentry.package_source_code
 RUN mix release
 
 FROM alpine:3.22 AS runner

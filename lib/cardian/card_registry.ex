@@ -140,7 +140,6 @@ defmodule Cardian.CardRegistry do
     else
       {:error, reason} ->
         Logger.error("Registry update failed: #{inspect(reason)}")
-        Sentry.capture_message("Card registry update failed", extra: %{reason: inspect(reason)})
     end
 
     schedule_update()
