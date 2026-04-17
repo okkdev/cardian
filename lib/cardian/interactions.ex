@@ -3,6 +3,7 @@ defmodule Cardian.Interactions do
   alias Nostrum.Api
   alias Nostrum.Struct.Interaction
   alias Cardian.{Builder, CardRegistry}
+  alias Cardian.Api.Images
   alias Cardian.Configs.UserConfig
   alias Cardian.UserConfigs
 
@@ -36,39 +37,17 @@ defmodule Cardian.Interactions do
 
     case CardRegistry.get_card(card) do
       [c | _] ->
-        format =
-          case c.type do
-            :skill ->
-              :sd
+        format = resolve_format(c.type, options, user_id)
 
-            _ ->
-              case Enum.find(options, &(&1.name == "format")) do
-                %{name: "format", value: "paper"} ->
-                  UserConfigs.create_or_update_config(%{discord_id: user_id, format: :paper})
-
-                  :paper
-
-                %{name: "format", value: "md"} ->
-                  UserConfigs.create_or_update_config(%{discord_id: user_id, format: :md})
-
-                  :md
-
-                %{name: "format", value: "dl"} ->
-                  UserConfigs.create_or_update_config(%{discord_id: user_id, format: :dl})
-
-                  :dl
-
-                _ ->
-                  case UserConfigs.get_config_by_discord_id(user_id) do
-                    %UserConfig{format: f} -> f
-                    _ -> :paper
-                  end
-              end
+        thumbnail_url =
+          case Images.get_image_url(c) do
+            {:ok, url} -> url
+            _ -> nil
           end
 
         msg = %{
           embeds: [
-            Builder.build_card_embed(c, format)
+            Builder.build_card_embed(c, format, thumbnail_url)
           ]
         }
 
@@ -163,10 +142,23 @@ defmodule Cardian.Interactions do
         else
           {:ok} = Api.Interaction.delete_response(interaction)
 
+          embeds =
+            cards
+            |> Task.async_stream(fn card ->
+              thumbnail_url =
+                case Images.get_image_url(card) do
+                  {:ok, url} -> url
+                  _ -> nil
+                end
+
+              Builder.build_card_embed(card, :paper, thumbnail_url)
+            end)
+            |> Enum.map(fn {:ok, embed} -> embed end)
+
           {:ok, _} =
             Api.Message.create(
               message.channel_id,
-              embeds: Enum.map(cards, &Builder.build_card_embed(&1)),
+              embeds: embeds,
               message_reference: %{message_id: message.id}
             )
         end
@@ -236,9 +228,13 @@ defmodule Cardian.Interactions do
       [c | _] ->
         c = %{c | ocg: ocg}
 
-        case Cardian.Api.Images.get_image_url(c) do
+        ocg_task =
+          if not ocg, do: Task.async(fn -> Images.ocg_available?(c.id) end)
+
+        case Images.get_image_url(c) do
           {:ok, image_url} ->
-            msg = Builder.build_art_message(c, image_url)
+            ocg_available = if ocg_task, do: Task.await(ocg_task, 3000), else: false
+            msg = Builder.build_art_message(c, image_url, ocg_available)
 
             case Api.Interaction.edit_response(interaction, msg) do
               {:ok, _} ->
@@ -257,6 +253,8 @@ defmodule Cardian.Interactions do
             end
 
           _ ->
+            if ocg_task, do: Task.shutdown(ocg_task, :brutal_kill)
+
             {:ok, _} =
               Api.Interaction.edit_response(
                 interaction,
@@ -279,6 +277,23 @@ defmodule Cardian.Interactions do
       Sentry.capture_exception(err, stacktrace: __STACKTRACE__)
 
       respond_error(interaction)
+  end
+
+  defp resolve_format(:skill, _options, _user_id), do: :sd
+
+  defp resolve_format(_type, options, user_id) do
+    case Enum.find(options, &(&1.name == "format")) do
+      %{value: v} when v in ["paper", "md", "dl"] ->
+        format = String.to_existing_atom(v)
+        UserConfigs.create_or_update_config(%{discord_id: user_id, format: format})
+        format
+
+      _ ->
+        case UserConfigs.get_config_by_discord_id(user_id) do
+          %UserConfig{format: f} -> f
+          _ -> :paper
+        end
+    end
   end
 
   defp report_discord_error(reason, extra) do

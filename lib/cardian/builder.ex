@@ -3,7 +3,6 @@ defmodule Cardian.Builder do
   alias Nostrum.Struct.Embed
   alias Cardian.Struct.Card
   alias Cardian.CardRegistry
-  alias Cardian.Api.Images
 
   @spell_trap_icons %{
     spell: "<:spell:948992874438070342>",
@@ -48,16 +47,11 @@ defmodule Cardian.Builder do
 
   @set_base_url "https://yugipedia.com/wiki/"
 
-  def build_card_embed(%Card{} = card, format \\ :paper) do
+  def build_card_embed(%Card{} = card, format \\ :paper, thumbnail_url \\ nil) do
     %Embed{}
     |> put_title(card.name)
     |> put_url(card.url)
-    |> put_thumbnail(
-      case Images.get_image_url(card) do
-        {:ok, url} -> url
-        _ -> card.image_url || @hat_token
-      end
-    )
+    |> put_thumbnail(thumbnail_url || card.image_url || @hat_token)
     |> try_put_color(get_card_color(card))
     |> put_card_metadata(card, format)
     |> try_put_field("Pendulum Effect", card.pendulum_effect)
@@ -69,14 +63,15 @@ defmodule Cardian.Builder do
     |> put_format_footer(format)
   end
 
-  def build_art_message(%Card{} = card, image_url) when is_binary(image_url) do
+  def build_art_message(%Card{} = card, image_url, ocg_available \\ false)
+      when is_binary(image_url) do
     embed =
       %Embed{}
       |> put_title(card.name)
       |> put_url(card.url)
       |> put_image(image_url)
       |> try_put_color(get_card_color(card))
-      |> put_ocg_footer(card)
+      |> put_ocg_footer(card.ocg, ocg_available)
 
     %{
       embeds: [
@@ -92,19 +87,9 @@ defmodule Cardian.Builder do
   defp put_format_footer(embed, :dl), do: put_footer(embed, "Format: Duel Links")
   defp put_format_footer(embed, :sd), do: put_footer(embed, "Format: Speed Duel")
 
-  defp put_ocg_footer(embed, %Card{ocg: true}) do
-    embed
-    |> put_footer("OCG Art")
-  end
-
-  defp put_ocg_footer(embed, %Card{ocg: false, id: card_id}) do
-    if Images.ocg_available?(card_id) do
-      embed
-      |> put_footer("OCG art available")
-    else
-      embed
-    end
-  end
+  defp put_ocg_footer(embed, true, _ocg_available), do: put_footer(embed, "OCG Art")
+  defp put_ocg_footer(embed, false, true), do: put_footer(embed, "OCG art available")
+  defp put_ocg_footer(embed, false, false), do: embed
 
   def build_user_message(body) do
     %{
@@ -166,19 +151,7 @@ defmodule Cardian.Builder do
       end
 
     attribute =
-      case format do
-        :paper ->
-          "**Attribute**: #{@attribute_icons[card.attribute]}"
-
-        :sd ->
-          "**Attribute**: #{@attribute_icons[card.attribute]}"
-
-        :md ->
-          "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity_md)}"
-
-        :dl ->
-          "**Attribute**: #{@attribute_icons[card.attribute]} #{put_card_rarity(card.rarity_dl)}"
-      end
+      "**Attribute**: #{@attribute_icons[card.attribute]} #{rarity_suffix(format, card)}"
 
     put_description(
       embed,
@@ -195,19 +168,7 @@ defmodule Cardian.Builder do
 
   defp put_card_metadata(embed, card, format) do
     type =
-      case format do
-        :paper ->
-          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]}"
-
-        :sd ->
-          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]}"
-
-        :md ->
-          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]} #{put_card_rarity(card.rarity_md)}"
-
-        :dl ->
-          "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]} #{put_card_rarity(card.rarity_dl)}"
-      end
+      "**Type**: #{@spell_trap_icons[card.type]} #{@card_type_icons[card.race]} #{rarity_suffix(format, card)}"
 
     put_description(
       embed,
@@ -226,6 +187,10 @@ defmodule Cardian.Builder do
   end
 
   defp put_card_rarity(_), do: ""
+
+  defp rarity_suffix(:md, card), do: put_card_rarity(card.rarity_md)
+  defp rarity_suffix(:dl, card), do: put_card_rarity(card.rarity_dl)
+  defp rarity_suffix(_, _card), do: ""
 
   defp put_card_status(%Card{} = card, :paper) do
     points =
@@ -297,30 +262,20 @@ defmodule Cardian.Builder do
     |> truncate_sets()
   end
 
-  defp build_sets(%Card{} = card, :md) when is_list(card.sets_md) and length(card.sets_md) > 0 do
-    card.sets_md
-    |> Enum.flat_map(&CardRegistry.get_set_by_id(&1))
-    |> Enum.map(
-      &if &1.url do
-        "[#{&1.name}](#{&1.url})"
-      else
-        &1.name
-      end
-    )
-    |> truncate_sets()
-  end
+  defp build_sets(%Card{} = card, format) when format in [:md, :dl] do
+    set_ids = if format == :md, do: card.sets_md, else: card.sets_dl
 
-  defp build_sets(%Card{} = card, :dl) when is_list(card.sets_dl) and length(card.sets_dl) > 0 do
-    card.sets_dl
-    |> Enum.flat_map(&CardRegistry.get_set_by_id(&1))
-    |> Enum.map(
-      &if &1.url do
-        "[#{&1.name}](#{&1.url})"
-      else
-        &1.name
-      end
-    )
-    |> truncate_sets()
+    if is_list(set_ids) and set_ids != [] do
+      set_ids
+      |> Enum.flat_map(&CardRegistry.get_set_by_id(&1))
+      |> Enum.map(fn
+        %{url: url, name: name} when is_binary(url) -> "[#{name}](#{url})"
+        %{name: name} -> name
+      end)
+      |> truncate_sets()
+    else
+      "Unreleased"
+    end
   end
 
   defp build_sets(_, _), do: "Unreleased"

@@ -11,5 +11,4 @@ defmodule Cardian.EventConsumer do
   def handle_event({:INTERACTION_CREATE, interaction, _ws_state}) do
     Interactions.handle(interaction)
   end
-
 end

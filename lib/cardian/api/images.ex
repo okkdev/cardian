@@ -9,18 +9,29 @@ defmodule Cardian.Api.Images do
   end
 
   def get_image_url(%{id: card_id, monster_types: types}) do
-    if image_url(card_id) |> available?() do
-      {:ok, image_url(card_id)}
-    else
-      if remote_art_url(card_id) |> available?() do
-        {:ok, remote_art_url(card_id)}
-      else
-        if remote_image_url(card_id) |> available?() do
-          {:ok, remote_imaginary_url(card_id, types)}
-        else
-          {:error, "Card image not found"}
-        end
-      end
+    sources = [
+      {:self_hosted, image_url(card_id)},
+      {:remote_art, remote_art_url(card_id)},
+      {:remote_image, remote_image_url(card_id)}
+    ]
+
+    results =
+      sources
+      |> Task.async_stream(
+        fn {key, url} -> {key, url, available?(url)} end,
+        timeout: 3000,
+        on_timeout: :kill_task
+      )
+      |> Enum.flat_map(fn
+        {:ok, result} -> [result]
+        {:exit, :timeout} -> []
+      end)
+
+    case Enum.find(results, &match?({_, _, true}, &1)) do
+      {:self_hosted, url, true} -> {:ok, url}
+      {:remote_art, url, true} -> {:ok, url}
+      {:remote_image, _url, true} -> {:ok, remote_imaginary_url(card_id, types)}
+      nil -> {:error, "Card image not found"}
     end
   end
 
@@ -29,17 +40,10 @@ defmodule Cardian.Api.Images do
   end
 
   defp available?(image_url) when is_binary(image_url) do
-    image_url
-    |> then(&Req.request(method: :head, url: &1))
-    |> then(fn res ->
-      case res do
-        {:ok, %{status: 200}} ->
-          true
-
-        _ ->
-          false
-      end
-    end)
+    case Req.request(method: :head, url: image_url, receive_timeout: 2000) do
+      {:ok, %{status: 200}} -> true
+      _ -> false
+    end
   end
 
   defp image_url(card_id) when is_binary(card_id) do
@@ -59,58 +63,18 @@ defmodule Cardian.Api.Images do
 
   defp remote_imaginary_url(card_id, types) when is_binary(card_id) do
     pipeline =
-      cond do
-        Enum.member?(types, "Pendulum") ->
-          [
-            %{
-              operation: "resize",
-              params: %{
-                width: 590,
-                force: true
-              }
-            },
-            %{
-              operation: "extract",
-              params: %{
-                top: 155,
-                left: 40,
-                areawidth: 510,
-                areaheight: 380
-              }
-            },
-            %{
-              operation: "convert",
-              params: %{
-                type: "webp"
-              }
-            }
-          ]
-
-        true ->
-          [
-            %{
-              operation: "resize",
-              params: %{
-                width: 590,
-                force: true
-              }
-            },
-            %{
-              operation: "extract",
-              params: %{
-                top: 155,
-                left: 70,
-                areawidth: 450,
-                areaheight: 450
-              }
-            },
-            %{
-              operation: "convert",
-              params: %{
-                type: "webp"
-              }
-            }
-          ]
+      if Enum.member?(types, "Pendulum") do
+        [
+          %{operation: "resize", params: %{width: 590, force: true}},
+          %{operation: "extract", params: %{top: 155, left: 40, areawidth: 510, areaheight: 380}},
+          %{operation: "convert", params: %{type: "webp"}}
+        ]
+      else
+        [
+          %{operation: "resize", params: %{width: 590, force: true}},
+          %{operation: "extract", params: %{top: 155, left: 70, areawidth: 450, areaheight: 450}},
+          %{operation: "convert", params: %{type: "webp"}}
+        ]
       end
       |> Jason.encode!()
 
