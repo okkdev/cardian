@@ -9,9 +9,15 @@ defmodule Cardian.Application do
   def start(_type, _args) do
     :ets.new(:bonk_cache, [:set, :public, :named_table, read_concurrency: true])
 
+    bot_options = %{
+      consumer: Cardian.EventConsumer,
+      intents: [:guilds],
+      wrapped_token: fn -> System.fetch_env!("CARDIAN_TOKEN") end
+    }
+
     children = [
       {Ecto.Migrator, repos: Application.fetch_env!(:cardian, :ecto_repos)},
-      Cardian.EventConsumer,
+      {Nostrum.Bot, bot_options},
       Cardian.CardRegistry,
       Cardian.Repo
     ]

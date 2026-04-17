@@ -16,7 +16,7 @@ defmodule Cardian.Interactions do
       when command_name in ["card", "art"] do
     cards = CardRegistry.search_card(query)
 
-    {:ok} =
+    :ok =
       Api.Interaction.create_response(interaction, %{
         type: 8,
         data: Builder.build_autocomplete_choices(cards)
@@ -33,7 +33,7 @@ defmodule Cardian.Interactions do
           user: %{id: user_id}
         } = interaction
       ) do
-    {:ok} = Api.Interaction.create_response(interaction, %{type: 5})
+    :ok = Api.Interaction.create_response(interaction, %{type: 5})
 
     case CardRegistry.get_card(card) do
       [c | _] ->
@@ -102,7 +102,7 @@ defmodule Cardian.Interactions do
 
     case card_names do
       [] ->
-        {:ok} =
+        :ok =
           Api.Interaction.create_response(
             interaction,
             %{
@@ -115,7 +115,7 @@ defmodule Cardian.Interactions do
           )
 
       card_names ->
-        {:ok} = Api.Interaction.create_response(interaction, %{type: 5})
+        :ok = Api.Interaction.create_response(interaction, %{type: 5})
 
         cards =
           card_names
@@ -140,7 +140,7 @@ defmodule Cardian.Interactions do
               Builder.build_user_message("Cards not found... :pensive:")
             )
         else
-          {:ok} = Api.Interaction.delete_response(interaction)
+          :ok = Api.Interaction.delete_response(interaction)
 
           embeds =
             cards
@@ -184,7 +184,7 @@ defmodule Cardian.Interactions do
     if Cardian.Api.Bonk.valid_user?(user_id) do
       handle_art(interaction, true)
     else
-      {:ok} =
+      :ok =
         Api.Interaction.create_response(
           interaction,
           %{
@@ -203,7 +203,7 @@ defmodule Cardian.Interactions do
   def handle(interaction) do
     Logger.error("Unknown command: #{inspect(interaction, pretty: true)}")
 
-    {:ok} =
+    :ok =
       Api.Interaction.create_response(
         interaction,
         %{
@@ -222,7 +222,7 @@ defmodule Cardian.Interactions do
          } = interaction,
          ocg
        ) do
-    {:ok} = Api.Interaction.create_response(interaction, %{type: 5})
+    :ok = Api.Interaction.create_response(interaction, %{type: 5})
 
     case CardRegistry.get_card(card) do
       [c | _] ->
