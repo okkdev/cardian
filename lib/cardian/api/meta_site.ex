@@ -19,14 +19,17 @@ defmodule Cardian.Api.MetaSite do
       pages = ceil(count / 3000)
 
       1..pages
-      |> Task.async_stream(fn page ->
-        url =
-          "#{config.base_url}/cards?limit=3000&page=#{page}"
-          |> URI.encode()
+      |> Task.async_stream(
+        fn page ->
+          url =
+            "#{config.base_url}/cards?limit=3000&page=#{page}"
+            |> URI.encode()
 
-        Req.request(url: url)
-        |> handle_response()
-      end, timeout: 10_000)
+          Req.request(url: url)
+          |> handle_response()
+        end,
+        timeout: 10_000
+      )
       |> Enum.reduce_while({:ok, []}, fn
         {:ok, {:ok, body}}, {:ok, acc} ->
           cards = Enum.filter(body, &(&1["alternateArt"] != true and &1["konamiID"] != nil))
@@ -107,7 +110,8 @@ defmodule Cardian.Api.MetaSite do
       name: resp["name"],
       type: resp["type"],
       url: get_set_link(resp["linkedArticle"]["url"], config),
-      image_url: if(resp["bannerImage"], do: "https://s3.duellinksmeta.com" <> resp["bannerImage"])
+      image_url:
+        if(resp["bannerImage"], do: "https://s3.duellinksmeta.com" <> resp["bannerImage"])
     }
   end
 

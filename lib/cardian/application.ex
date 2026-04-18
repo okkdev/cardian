@@ -20,7 +20,8 @@ defmodule Cardian.Application do
       {Ecto.Migrator, repos: Application.fetch_env!(:cardian, :ecto_repos)},
       {Nostrum.Bot, bot_options},
       Cardian.CardRegistry,
-      Cardian.Repo
+      Cardian.Repo,
+      Cardian.HealthCheck
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -28,5 +29,4 @@ defmodule Cardian.Application do
     opts = [strategy: :one_for_one, name: Cardian.Supervisor]
     Supervisor.start_link(children, opts)
   end
-
 end

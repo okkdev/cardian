@@ -38,7 +38,8 @@ config :logger,
 
 config :cardian,
   update_interval: String.to_integer(System.get_env("CARDIAN_UPDATE_INTERVAL", "120")),
-  bonk_url: System.get_env("BONK_URL", "http://localhost:3000/order/list?auth=test-token")
+  bonk_url: System.get_env("BONK_URL", "http://localhost:3000/order/list?auth=test-token"),
+  push_url: System.get_env("PUSH_URL")
 
 config :cardian, Cardian.Repo,
   database: "database.db",

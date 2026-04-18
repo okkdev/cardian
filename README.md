@@ -51,6 +51,7 @@ docker exec cardian /app/bin/cardian rpc "Cardian.Commands.deploy()"
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry exporter endpoint for metrics and logging
 - `OTEL_AUTH`: Basic auth credentials for the OTLP exporter
 - `OTEL_STREAM_NAME`: OTLP stream name. Default: `default`
+- `PUSH_URL`: Uptime Kuma push monitor URL for health checks
 
 ## Development
 
