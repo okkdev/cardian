@@ -2,7 +2,7 @@
 
 Yu-Gi-Oh! Paper, Master Duel and Duel Links Discord Bot
 
-Fetches data from the [YGOPRODeck](https://ygoprodeck.com/) and [Master Duel Meta](https://masterduelmeta.com/) APIs
+Fetches data from the [YGOPRODeck](https://ygoprodeck.com/), [Master Duel Meta](https://masterduelmeta.com/) and [Duel Links Meta](https://www.duellinksmeta.com/) APIs
 
 Get the bot from the new Discord app directory!
 
@@ -30,13 +30,13 @@ Run the container with this command:
 
 ```sh
 docker pull ghcr.io/okkdev/cardian:latest
-docker run -e CARDIAN_TOKEN=<your-bot-token> BONK_URL=<bonk-url> okkdev/cardian --name cardian
+docker run -e CARDIAN_TOKEN=<your-bot-token> okkdev/cardian --name cardian
 ```
 
 To deploy the application commands run this command once:
 
 ```sh
-docker exec cardian /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()"
+docker exec cardian /app/bin/cardian rpc "Cardian.Commands.deploy()"
 ```
 
 #### 🚨 It can take up to 1h to register application commands
@@ -45,9 +45,12 @@ docker exec cardian /app/bin/cardian rpc "Cardian.Interactions.deploy_commands()
 
 ### Environment variables
 
-- `BONK_URL`: This is the URL for the [bonk microservice](https://github.com/okkdev/bonk) which returns the whitelist of users that donated on kofi, used for the OCG art command
 - `CARDIAN_TOKEN`: Discord bot token
+- `BONK_URL`: This is the URL for the [bonk microservice](https://github.com/okkdev/bonk) which returns the whitelist of users that donated on kofi, used for the OCG art command
 - `CARDIAN_UPDATE_INTERVAL`: Card cache update interval in minutes. Default: 120
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry exporter endpoint for metrics and logging
+- `OTEL_AUTH`: Basic auth credentials for the OTLP exporter
+- `OTEL_STREAM_NAME`: OTLP stream name. Default: `default`
 
 ## Development
 
