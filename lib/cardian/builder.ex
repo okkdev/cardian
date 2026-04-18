@@ -63,14 +63,18 @@ defmodule Cardian.Builder do
     |> put_format_footer(format)
   end
 
+  def build_art_embed(%Card{} = card, image_url) when is_binary(image_url) do
+    %Embed{}
+    |> put_title(card.name)
+    |> put_url(card.url)
+    |> put_image(image_url)
+    |> try_put_color(get_card_color(card))
+  end
+
   def build_art_message(%Card{} = card, image_url, ocg_available \\ false)
       when is_binary(image_url) do
     embed =
-      %Embed{}
-      |> put_title(card.name)
-      |> put_url(card.url)
-      |> put_image(image_url)
-      |> try_put_color(get_card_color(card))
+      build_art_embed(card, image_url)
       |> put_ocg_footer(card.ocg, ocg_available)
 
     %{

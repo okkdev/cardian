@@ -102,13 +102,11 @@ defmodule Cardian.Interactions do
         messages
         |> Map.values()
 
-      {:ok, card_names, _, _, _, _} =
-        message.content
-        |> Cardian.Parser.card_names()
+      card_refs = Cardian.Parser.parse(message.content)
 
-      Tracer.set_attribute("card_count", length(card_names))
+      Tracer.set_attribute("card_count", length(card_refs))
 
-      case card_names do
+      case card_refs do
         [] ->
           Api.Interaction.create_response(
             interaction,
@@ -116,55 +114,65 @@ defmodule Cardian.Interactions do
               type: 4,
               data:
                 Builder.build_user_message(
-                  "No card names found. Did you forget to use angle brackets, like this: `<card name>`?"
+                  "No card names found. Use `<card name>` or `[card name]` for info, `a[card name]` for art."
                 )
             }
           )
 
-        card_names ->
+        card_refs ->
           defer_task =
             Task.async(fn -> Api.Interaction.create_response(interaction, %{type: 5}) end)
 
-          cards =
+          resolved =
             Tracer.with_span "card_registry.lookup_batch" do
-              card_names
-              |> Enum.map(
-                &case CardRegistry.get_card(&1) do
-                  [c | _] -> c
+              card_refs
+              |> Enum.map(fn {type, name} ->
+                case CardRegistry.get_card(name) do
+                  [c | _] -> {type, c}
                   [] -> nil
                 end
-              )
-              |> Enum.dedup()
+              end)
               |> Enum.filter(&(not is_nil(&1)))
+              |> Enum.uniq_by(fn {type, card} -> {type, card.name} end)
               |> Enum.take(10)
             end
 
-          Tracer.set_attribute("cards_found", length(cards))
+          Tracer.set_attribute("cards_found", length(resolved))
 
           Task.await(defer_task)
 
-          if Enum.empty?(cards) do
+          if Enum.empty?(resolved) do
             Api.Interaction.edit_response(
               interaction,
               Builder.build_user_message("Cards not found... :pensive:")
             )
           else
-            Enum.each(cards, &Metrics.count_card_request(&1.name, "embed_cards"))
+            Enum.each(resolved, fn {type, card} ->
+              Metrics.count_card_request(card.name, "embed_#{type}")
+            end)
+
             Api.Interaction.delete_response(interaction)
 
             embeds =
               Tracer.with_span "images.get_urls_batch" do
-                cards
-                |> Task.async_stream(fn card ->
-                  thumbnail_url =
-                    case Images.get_image_url(card) do
-                      {:ok, url} -> url
-                      _ -> nil
-                    end
+                resolved
+                |> Task.async_stream(fn {type, card} ->
+                  case Images.get_image_url(card) do
+                    {:ok, url} ->
+                      case type do
+                        :card -> Builder.build_card_embed(card, :paper, url)
+                        :art -> Builder.build_art_embed(card, url)
+                      end
 
-                  Builder.build_card_embed(card, :paper, thumbnail_url)
+                    _ ->
+                      case type do
+                        :card -> Builder.build_card_embed(card, :paper, nil)
+                        :art -> nil
+                      end
+                  end
                 end)
                 |> Enum.map(fn {:ok, embed} -> embed end)
+                |> Enum.filter(&(not is_nil(&1)))
               end
 
             Tracer.with_span "discord.create_message" do
