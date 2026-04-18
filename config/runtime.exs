@@ -34,18 +34,7 @@ config :opentelemetry_experimental,
   ]
 
 config :logger,
-  handle_otp_reports: true,
-  handlers: [
-    %{
-      id: :otel_log_handler,
-      module: :otel_log_handler,
-      config: %{
-        exporter:
-          {:opentelemetry_exporter,
-           %{protocol: :http_protobuf, endpoint: otel_endpoint, headers: otel_headers}}
-      }
-    }
-  ]
+  handle_otp_reports: true
 
 config :cardian,
   update_interval: String.to_integer(System.get_env("CARDIAN_UPDATE_INTERVAL", "120")),
