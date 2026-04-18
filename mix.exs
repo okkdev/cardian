@@ -4,7 +4,7 @@ defmodule Cardian.MixProject do
   def project do
     [
       app: :cardian,
-      version: "0.1.0",
+      version: "7.5.0",
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps()
@@ -29,6 +29,7 @@ defmodule Cardian.MixProject do
       {:ecto_sqlite3, "~> 0.22"},
       {:ecto_ulid, "~> 0.3.0"},
       {:opentelemetry, "~> 1.7"},
+      # git because of metrics
       {:opentelemetry_experimental,
        github: "open-telemetry/opentelemetry-erlang",
        sparse: "apps/opentelemetry_experimental",

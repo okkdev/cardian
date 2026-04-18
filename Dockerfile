@@ -1,4 +1,4 @@
-FROM hexpm/elixir:1.19-erlang-28.1-alpine-3.22.2 AS builder
+FROM elixir:1.19-otp-alpine AS builder
 
 ENV MIX_ENV=prod
 
@@ -17,7 +17,7 @@ RUN mix deps.get
 RUN mix deps.compile
 RUN mix release
 
-FROM alpine:3.22 AS runner
+FROM alpine:3.23 AS runner
 
 RUN apk update && \
   apk add --no-cache bash libstdc++ openssl ncurses-libs
