@@ -6,12 +6,12 @@ defmodule Cardian.Api.Ygoprodeck do
   def get_all_cards do
     with {:ok, data} <-
            Req.request(url: @url, params: [format: "genesys", misc: "yes"]) |> handle_response() do
-      cards =
-        data
-        |> Task.async_stream(&cast_card/1, ordered: false, timeout: 10_000)
-        |> Enum.map(fn {:ok, card} -> card end)
-
-      {:ok, cards}
+      data
+      |> Task.async_stream(&cast_card/1, ordered: false, timeout: 10_000)
+      |> Enum.reduce_while({:ok, []}, fn
+        {:ok, card}, {:ok, acc} -> {:cont, {:ok, [card | acc]}}
+        {:exit, reason}, _ -> {:halt, {:error, reason}}
+      end)
     end
   end
 

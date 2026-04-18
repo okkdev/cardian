@@ -11,13 +11,15 @@ defmodule Cardian.Api.Bonk do
   end
 
   defp fetch_and_cache_users do
-    users =
-      get_valid_users()
-      |> Enum.map(& &1["discord_id"])
-      |> MapSet.new()
+    case get_valid_users() do
+      {:ok, data} ->
+        users = data |> Enum.map(& &1["discord_id"]) |> MapSet.new()
+        :ets.insert(:bonk_cache, {:users, users, System.monotonic_time(:millisecond)})
+        users
 
-    :ets.insert(:bonk_cache, {:users, users, System.monotonic_time(:millisecond)})
-    users
+      :error ->
+        MapSet.new()
+    end
   end
 
   defp get_cached_users do
@@ -36,8 +38,8 @@ defmodule Cardian.Api.Bonk do
 
   defp get_valid_users do
     case Req.request(url: bonk_url()) do
-      {:ok, resp} -> resp.body
-      {:error, _} -> []
+      {:ok, resp} -> {:ok, resp.body}
+      {:error, _} -> :error
     end
   end
 

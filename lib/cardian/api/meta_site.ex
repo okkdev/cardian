@@ -34,6 +34,9 @@ defmodule Cardian.Api.MetaSite do
 
         {:ok, {:error, reason}}, _ ->
           {:halt, {:error, reason}}
+
+        {:exit, reason}, _ ->
+          {:halt, {:error, reason}}
       end)
     end
   end
@@ -104,7 +107,7 @@ defmodule Cardian.Api.MetaSite do
       name: resp["name"],
       type: resp["type"],
       url: get_set_link(resp["linkedArticle"]["url"], config),
-      image_url: "https://s3.duellinksmeta.com" <> resp["bannerImage"]
+      image_url: if(resp["bannerImage"], do: "https://s3.duellinksmeta.com" <> resp["bannerImage"])
     }
   end
 

@@ -1,11 +1,6 @@
 defmodule Cardian.UserConfigs do
-  import Ecto.Query, warn: false
   alias Cardian.Repo
   alias Cardian.Configs.UserConfig
-
-  def list_configs do
-    Repo.all(UserConfig)
-  end
 
   def get_config_by_discord_id(discord_id) do
     Repo.get_by(UserConfig, discord_id: discord_id)
