@@ -4,7 +4,7 @@ defmodule Cardian.MixProject do
   def project do
     [
       app: :cardian,
-      version: "7.7.0",
+      version: "7.7.1",
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps()
