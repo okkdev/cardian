@@ -47,7 +47,7 @@ defmodule Cardian.Interactions do
       ) do
     Tracer.with_span "interaction.card",
       attributes: %{"query" => card, "user_id" => to_string(user_id)} do
-      defer_task = Task.async(fn -> Api.Interaction.create_response(interaction, %{type: 5}) end)
+      defer_task = start_defer(interaction)
 
       case Tracer.with_span("card_registry.lookup", do: CardRegistry.get_card(card)) do
         [c | _] ->
@@ -64,21 +64,18 @@ defmodule Cardian.Interactions do
               end
             end
 
-          msg = %{
-            embeds: [
-              Builder.build_card_embed(c, format, thumbnail_url)
-            ]
-          }
+          msg =
+            Tracer.with_span "builder.build_embed" do
+              %{embeds: [Builder.build_card_embed(c, format, thumbnail_url)]}
+            end
 
-          Task.await(defer_task)
-          edit_response(interaction, msg)
+          respond(defer_task, interaction, msg)
 
         [] ->
           Tracer.set_attribute("card_found", false)
 
-          Task.await(defer_task)
-
-          Api.Interaction.edit_response(
+          respond(
+            defer_task,
             interaction,
             Builder.build_user_message("`#{card}` not found... :pensive:")
           )
@@ -121,7 +118,7 @@ defmodule Cardian.Interactions do
 
         card_refs ->
           defer_task =
-            Task.async(fn -> Api.Interaction.create_response(interaction, %{type: 5}) end)
+            start_defer(interaction)
 
           resolved =
             Tracer.with_span "card_registry.lookup_batch" do
@@ -139,22 +136,29 @@ defmodule Cardian.Interactions do
 
           Tracer.set_attribute("cards_found", length(resolved))
 
-          Task.await(defer_task)
-
           if Enum.empty?(resolved) do
-            Api.Interaction.edit_response(
+            respond(
+              defer_task,
               interaction,
               Builder.build_user_message("Cards not found... :pensive:")
             )
           else
+            {task, started_at} = defer_task
+            elapsed = System.monotonic_time(:millisecond) - started_at
+
+            if elapsed < 1_900 do
+              Task.shutdown(task, :brutal_kill)
+            else
+              await_task(task, elapsed)
+              Api.Interaction.delete_response(interaction)
+            end
+
             Enum.each(resolved, fn {type, card} ->
               Metrics.count_card_request(card.name, "embed_#{type}")
             end)
 
-            Api.Interaction.delete_response(interaction)
-
             embeds =
-              Tracer.with_span "images.get_urls_batch" do
+              Tracer.with_span "builder.build_embeds" do
                 resolved
                 |> Task.async_stream(fn {type, card} ->
                   case Images.get_image_url(card) do
@@ -246,7 +250,7 @@ defmodule Cardian.Interactions do
          ocg
        ) do
     Tracer.set_attribute("query", card)
-    defer_task = Task.async(fn -> Api.Interaction.create_response(interaction, %{type: 5}) end)
+    defer_task = start_defer(interaction)
 
     case Tracer.with_span("card_registry.lookup", do: CardRegistry.get_card(card)) do
       [c | _] ->
@@ -259,19 +263,29 @@ defmodule Cardian.Interactions do
 
         case Tracer.with_span("images.get_url", do: Images.get_image_url(c)) do
           {:ok, image_url} ->
-            ocg_available = if ocg_task, do: Task.await(ocg_task, 3000), else: false
-            msg = Builder.build_art_message(c, image_url, ocg_available)
+            ocg_available =
+              if ocg_task do
+                case Task.yield(ocg_task, 3_000) || Task.shutdown(ocg_task) do
+                  {:ok, result} -> result
+                  _ -> false
+                end
+              else
+                false
+              end
 
-            Task.await(defer_task)
-            edit_response(interaction, msg)
+            msg =
+              Tracer.with_span "builder.build_embed" do
+                Builder.build_art_message(c, image_url, ocg_available)
+              end
+
+            respond(defer_task, interaction, msg)
 
           _ ->
             Tracer.add_event("image_not_found", %{"card" => c.name})
             if ocg_task, do: Task.shutdown(ocg_task, :brutal_kill)
 
-            Task.await(defer_task)
-
-            Api.Interaction.edit_response(
+            respond(
+              defer_task,
               interaction,
               Builder.build_user_message(
                 "#{if c.ocg, do: "OCG "}Art for `#{c.name}` not found... :pensive:"
@@ -282,9 +296,8 @@ defmodule Cardian.Interactions do
       [] ->
         Tracer.set_attribute("card_found", false)
 
-        Task.await(defer_task)
-
-        Api.Interaction.edit_response(
+        respond(
+          defer_task,
           interaction,
           Builder.build_user_message("`#{card}` not found... :pensive:")
         )
@@ -296,17 +309,44 @@ defmodule Cardian.Interactions do
   If this issue persists, report it on the [Cardian Support Server](<https://discord.gg/GDt8p2Jyrn>).
   """
 
-  defp edit_response(interaction, msg) do
-    Tracer.with_span "discord.edit_response" do
-      case Api.Interaction.edit_response(interaction, msg) do
-        {:ok, _} = result ->
-          result
+  defp start_defer(interaction) do
+    task =
+      Task.async(fn ->
+        Process.sleep(2_000)
+        Api.Interaction.create_response(interaction, %{type: 5})
+      end)
 
-        {:error, reason} ->
-          Tracer.set_status(:error, inspect(reason))
-          Logger.error("edit_response failed: #{inspect(reason)}")
-          Api.Interaction.edit_response(interaction, Builder.build_user_message(@error_message))
+    {task, System.monotonic_time(:millisecond)}
+  end
+
+  defp respond({task, started_at}, interaction, msg) do
+    elapsed = System.monotonic_time(:millisecond) - started_at
+
+    if elapsed < 1_900 do
+      Task.shutdown(task, :brutal_kill)
+      Api.Interaction.create_response(interaction, %{type: 4, data: msg})
+    else
+      await_task(task, elapsed)
+
+      Tracer.with_span "discord.edit_response" do
+        case Api.Interaction.edit_response(interaction, msg) do
+          {:ok, _} = result ->
+            result
+
+          {:error, reason} ->
+            Tracer.set_status(:error, inspect(reason))
+            Logger.error("edit_response failed: #{inspect(reason)}")
+            Api.Interaction.edit_response(interaction, Builder.build_user_message(@error_message))
+        end
       end
+    end
+  end
+
+  defp await_task(task, elapsed) do
+    case Task.yield(task, 1_000) || Task.shutdown(task) do
+      {:ok, result} -> result
+      {:exit, reason} -> Logger.error("Deferred response crashed: #{inspect(reason)}")
+      nil -> Logger.warning("Deferred response timed out after #{elapsed}ms")
     end
   end
 
