@@ -149,8 +149,18 @@ defmodule Cardian.Interactions do
             if elapsed < 1_900 do
               Task.shutdown(task, :brutal_kill)
             else
-              await_task(task, elapsed)
-              Api.Interaction.delete_response(interaction)
+              case await_task(task) do
+                {:ok, _} ->
+                  Api.Interaction.delete_response(interaction)
+
+                {:exit, reason} ->
+                  Logger.error("Deferred response crashed: #{inspect(reason)}")
+                  Tracer.set_status(:error, "defer crashed: #{inspect(reason)}")
+
+                nil ->
+                  Logger.warning("Deferred response timed out")
+                  Tracer.set_status(:error, "defer timed out")
+              end
             end
 
             Enum.each(resolved, fn {type, card} ->
@@ -229,6 +239,7 @@ defmodule Cardian.Interactions do
   def handle(interaction) do
     Tracer.with_span "interaction.unknown" do
       Logger.error("Unknown command: #{inspect(interaction, pretty: true)}")
+      Tracer.set_status(:error, "unknown command")
 
       Api.Interaction.create_response(
         interaction,
@@ -265,7 +276,7 @@ defmodule Cardian.Interactions do
           {:ok, image_url} ->
             ocg_available =
               if ocg_task do
-                case Task.yield(ocg_task, 3_000) || Task.shutdown(ocg_task) do
+                case await_task(ocg_task) do
                   {:ok, result} -> result
                   _ -> false
                 end
@@ -319,34 +330,46 @@ defmodule Cardian.Interactions do
     {task, System.monotonic_time(:millisecond)}
   end
 
+  defp await_task(task) do
+    Task.yield(task, 3_000) || Task.shutdown(task)
+  end
+
   defp respond({task, started_at}, interaction, msg) do
     elapsed = System.monotonic_time(:millisecond) - started_at
 
     if elapsed < 1_900 do
       Task.shutdown(task, :brutal_kill)
-      Api.Interaction.create_response(interaction, %{type: 4, data: msg})
-    else
-      await_task(task, elapsed)
 
-      Tracer.with_span "discord.edit_response" do
-        case Api.Interaction.edit_response(interaction, msg) do
-          {:ok, _} = result ->
-            result
-
-          {:error, reason} ->
-            Tracer.set_status(:error, inspect(reason))
-            Logger.error("edit_response failed: #{inspect(reason)}")
-            Api.Interaction.edit_response(interaction, Builder.build_user_message(@error_message))
-        end
+      Tracer.with_span "discord.create_response" do
+        Api.Interaction.create_response(interaction, %{type: 4, data: msg})
       end
-    end
-  end
+    else
+      case await_task(task) do
+        {:ok, _} ->
+          Tracer.with_span "discord.edit_response" do
+            case Api.Interaction.edit_response(interaction, msg) do
+              {:ok, _} = result ->
+                result
 
-  defp await_task(task, elapsed) do
-    case Task.yield(task, 1_000) || Task.shutdown(task) do
-      {:ok, result} -> result
-      {:exit, reason} -> Logger.error("Deferred response crashed: #{inspect(reason)}")
-      nil -> Logger.warning("Deferred response timed out after #{elapsed}ms")
+              {:error, reason} ->
+                Tracer.set_status(:error, inspect(reason))
+                Logger.error("edit_response failed: #{inspect(reason)}")
+
+                Api.Interaction.edit_response(
+                  interaction,
+                  Builder.build_user_message(@error_message)
+                )
+            end
+          end
+
+        {:exit, reason} ->
+          Logger.error("Deferred response crashed: #{inspect(reason)}")
+          Tracer.set_status(:error, "defer crashed: #{inspect(reason)}")
+
+        nil ->
+          Logger.warning("Deferred response timed out after #{elapsed}ms")
+          Tracer.set_status(:error, "defer timed out after #{elapsed}ms")
+      end
     end
   end
 
