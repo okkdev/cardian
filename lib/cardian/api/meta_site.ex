@@ -28,7 +28,8 @@ defmodule Cardian.Api.MetaSite do
           Req.request(url: url)
           |> handle_response()
         end,
-        timeout: 10_000
+        timeout: 30_000,
+        on_timeout: :kill_task
       )
       |> Enum.reduce_while({:ok, []}, fn
         {:ok, {:ok, body}}, {:ok, acc} ->

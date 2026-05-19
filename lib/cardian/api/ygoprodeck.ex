@@ -7,7 +7,7 @@ defmodule Cardian.Api.Ygoprodeck do
     with {:ok, data} <-
            Req.request(url: @url, params: [format: "genesys", misc: "yes"]) |> handle_response() do
       data
-      |> Task.async_stream(&cast_card/1, ordered: false, timeout: 10_000)
+      |> Task.async_stream(&cast_card/1, ordered: false, timeout: 30_000, on_timeout: :kill_task)
       |> Enum.reduce_while({:ok, []}, fn
         {:ok, card}, {:ok, acc} -> {:cont, {:ok, [card | acc]}}
         {:exit, reason}, _ -> {:halt, {:error, reason}}
